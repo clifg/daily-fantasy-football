@@ -35,8 +35,6 @@ passport.use(new FacebookStrategy(secrets.facebook, function(req, accessToken, r
             }
         });
     } else {
-
-        
         User.findOne({ facebookId: profile.id }, function(err, existingUser) {
             if (err) { return done(err); }
 

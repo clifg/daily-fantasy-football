@@ -14,7 +14,10 @@ var passport = require('passport');
 var secrets = require('./config/secrets');
 var passportConf = require('./config/passport');
 
-var routes = require('./routes/index');
+var index = require('./routes/index');
+var login = require('./routes/login');
+var logout = require('./routes/logout');
+var admin = require('./routes/admin');
 var users = require('./routes/users');
 
 var app = express();
@@ -35,31 +38,42 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
   secret: secrets.sessionSecret,
+  cookie: { maxAge: 60000 },
   store: new MongoStore({ url: secrets.db, autoReconnect: true })
 }));
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(flash());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
+// Ensure every page has access to the current user
+app.use(function(req, res, next) {
+  res.locals.user = req.user;
+  next();
+});
+
+// Client
+app.use('/', index);
+app.use('/login', login);
+app.use('/logout', logout);
+app.use('/admin', admin);
+
+// APIS
 app.use('/api/v1/users', users);
 
-app.get('/auth/facebook', passport.authenticate('facebook', { scope: 'email' }));
+// Authentication with Facebook
+app.get('/auth/facebook', function(req, res, next) {
+    if (req.user)
+    {
+      // User is already logged in. Don't try to auth again.
+      req.flash('error', { msg: 'Please log out before trying to log in with Facebook'});
+      return res.redirect('/');
+    }
+
+    next();
+  }, 
+  passport.authenticate('facebook', { scope: 'email' }));
 app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }));
-
-app.get('/login', function(req, res) {
-  if (req.user)
-  {
-    return res.redirect('/');
-  }
-  res.render('login', { title: 'Login' });
-});
-
-app.get('/logout', function(req, res) {
-  req.logout();
-  res.redirect('/');
-});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
