@@ -1,0 +1,8 @@
+<h1>Admin Page</h1>
+<ul>
+    <li ng-repeat='user in users'>
+        <a href="/#/user/{{user._id}}">
+            {{user.profile.name}} ({{user.profile.email}})
+        </a>
+    </li>
+</ul>

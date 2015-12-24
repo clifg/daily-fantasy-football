@@ -1,13 +1,22 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET login page. */
+/* GET: Returns the currently logged-in user. */
 router.get('/', function(req, res) {
   if (req.user)
   {
-    return res.redirect('/');
+    res.json(req.user);
   }
-  res.render('login', { title: 'Login' });
+  else
+  {
+    res.send(401);
+  }
+});
+
+/* DELETE: logs out */
+router.delete('/', function(req, res) {
+    req.logout();
+    res.send(200);
 });
 
 module.exports = router;

@@ -43,6 +43,8 @@ passport.use(new FacebookStrategy(secrets.facebook, function(req, accessToken, r
                 return done(null, existingUser);
             } else {
                 // New user! Create an account in our database
+                console.log(profile);
+                
                 var user = new User();
 
                 user.facebookId = profile.id;
@@ -75,5 +77,5 @@ exports.isAdmin = function(req, res, next) {
     if (req.user && req.user.isAdmin) {
         return next();
     }
-    res.status(401).send('Not authorized!');
+    res.send(401);
 };

@@ -16,8 +16,6 @@ var passportConf = require('./config/passport');
 
 var index = require('./routes/index');
 var login = require('./routes/login');
-var logout = require('./routes/logout');
-var admin = require('./routes/admin');
 var users = require('./routes/users');
 
 var app = express();
@@ -54,14 +52,16 @@ app.use(function(req, res, next) {
 
 // Client
 app.use('/', index);
-app.use('/login', login);
-app.use('/logout', logout);
-app.use('/admin', admin);
+app.use('/login', function(req, res) {
+  res.render('login', { title: 'Login' });
+});
 
-// APIS
+// APIs
+app.use('/api/v1/login', login);
 app.use('/api/v1/users', users);
 
 // Authentication with Facebook
+// TODO: Should this be moved under /api?
 app.get('/auth/facebook', function(req, res, next) {
     if (req.user)
     {
@@ -69,10 +69,9 @@ app.get('/auth/facebook', function(req, res, next) {
       req.flash('error', { msg: 'Please log out before trying to log in with Facebook'});
       return res.redirect('/');
     }
-
     next();
   }, 
-  passport.authenticate('facebook', { scope: 'email' }));
+  passport.authenticate('facebook', { scope: ['public_profile', 'email'] }));
 app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login', successRedirect: '/' }));
 
 // catch 404 and forward to error handler

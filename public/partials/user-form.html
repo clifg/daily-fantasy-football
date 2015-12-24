@@ -1,0 +1,18 @@
+<form> 
+    <div class="form-group">
+        <label>Name</label>
+        <br>
+        {{user.profile.name}}
+    </div>
+    <div class="form-group">
+        <label>Email</label>
+        <br>
+        {{user.profile.email}}
+    </div>
+    <div class="form-group">
+        <label>Picture</label>
+        <br>
+        {{user.profile.picture}}
+    </div>
+    <input type="button" class="btn btn-danger" value="Delete Account" ng-click="delete()"></input>
+</form>

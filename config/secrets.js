@@ -9,6 +9,7 @@ module.exports = {
         clientSecret: process.env.DAILYFANTASY_FACEBOOK_SECRET,
         callbackURL: '/auth/facebook/callback',
         passReqToCallback: true,
+        profileFields: ['id', 'email', 'name', 'displayName'],
 
         // Used by our code
         adminFacebookId: process.env.DAILYFANTASY_ADMIN_FACEBOOK_ID,
