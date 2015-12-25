@@ -1,4 +1,5 @@
 <h1>Admin Page</h1>
+<h2>Users</h2>
 <ul>
     <li ng-repeat='user in users'>
         <a href="/#/user/{{user._id}}">
@@ -6,3 +7,10 @@
         </a>
     </li>
 </ul>
+<h2>Weeks</h2>
+<ul>
+    <li ng-repeat='week in weeks'>
+    Week {{week.weekNumber}}
+    </li>
+</ul>
+<a href='#/addweek'>Add a week</a>
