@@ -18,6 +18,10 @@ app.config(['$routeProvider', function($routeProvider){
             templateUrl: 'partials/admin.html',
             controller: 'AdminCtrl'
         })
+        .when('/addweek', {
+            templateUrl: '/partials/week-form.html',
+            controller: 'AddWeekCtrl'
+        })
         .when('/login', {
             templateUrl: 'partials/login.html'
         })

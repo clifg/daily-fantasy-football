@@ -2,6 +2,11 @@ var app = angular.module('DailyFantasyFootball');
 
 app.controller('HomeCtrl', ['$scope', '$resource',
     function($scope, $resource) {
+        var Weeks = $resource('/api/v1/weeks');
+
+        Weeks.query(function(weeks) {
+            $scope.weeks = weeks;
+        });
     }
 ]);
 
@@ -48,13 +53,37 @@ app.controller('MeCtrl', ['$rootScope', '$scope', '$resource', '$location',
     }
 ]);
 
-app.controller('AdminCtrl', ['$scope', '$resource',
-    function($scope, $resource) {
-        var Users = $resource('/api/v1/users');
+app.controller('AdminCtrl', ['$rootScope', '$scope', '$resource', '$location',
+    function($rootScope, $scope, $resource, $location) {
+        if (!$rootScope.user.isAdmin) {
+            $location.path('/');
+        } else {
+            var Users = $resource('/api/v1/users');
 
-        Users.query(function(users) {
-            $scope.users = users;
-        });
+            Users.query(function(users) {
+                $scope.users = users;
+            });
+
+            var Weeks = $resource('/api/v1/weeks');
+
+            Weeks.query(function(weeks) {
+                $scope.weeks = weeks;
+            });
+        }
+    }
+]);
+
+app.controller('AddWeekCtrl', ['$scope', '$resource', '$location', '$routeParams',
+    function($scope, $resource, $location, $routeParams) {
+        $scope.save = function() {
+            var Weeks = $resource('/api/v1/weeks');
+
+            Weeks.save($scope.week, function() {
+                $location.path('/admin');
+            }, function() {
+                // TODO: handle failures
+            });
+        };
     }
 ]);
 

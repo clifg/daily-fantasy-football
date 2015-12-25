@@ -16,6 +16,8 @@ var playerSchema = new Schema({
 var weekSchema = new Schema({
     weekNumber: { type: Number, min: 1, max: 22 },
     weekStart: Date,
+    weekLocked: Date,
+    weekEnd: Date,
 
     players: [playerSchema]
 });

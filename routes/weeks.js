@@ -8,7 +8,7 @@ var Week = require('../models/week.js');
 // TODO: protect these APIs
 
 router.get('/', function(req, res) {
-    Week.find({}, function(err, weeks) {
+    Week.find({}, null, {sort: {weekNumber: 1}}, function(err, weeks) {
         if (err) throw err;
         res.json(weeks);
     });
