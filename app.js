@@ -17,6 +17,7 @@ var passportConf = require('./config/passport');
 var index = require('./routes/index');
 var login = require('./routes/login');
 var users = require('./routes/users');
+var weeks = require('./routes/weeks');
 
 var app = express();
 
@@ -59,6 +60,7 @@ app.use('/login', function(req, res) {
 // APIs
 app.use('/api/v1/login', login);
 app.use('/api/v1/users', users);
+app.use('/api/v1/weeks', weeks);
 
 // Authentication with Facebook
 // TODO: Should this be moved under /api?
