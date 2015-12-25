@@ -27,6 +27,9 @@
             <i class="caret"></i>
           </a>
           <ul class="dropdown-menu">
+            <li ng-if="user.isAdmin">
+              <a href="#/admin">Admin</a>
+            </li>
             <li>
               <a href="#/me">Account</a>
             </li>
