@@ -55,6 +55,8 @@ app.controller('MeCtrl', ['$rootScope', '$scope', '$resource', '$location',
 
 app.controller('AdminCtrl', ['$rootScope', '$scope', '$resource', '$location',
     function($rootScope, $scope, $resource, $location) {
+        // TODO: Move the admin check to a service. This check should probably be in one
+        // of those 'resolve' things rather than in this contoller too...
         if (!$rootScope.user.isAdmin) {
             $location.path('/');
         } else {
