@@ -5,5 +5,29 @@
         <label>Number</label>
         <input class="form-control" ng-model="week.weekNumber"></input>
     </div>
+    <div class="form-group">
+        <label>Week Lock</label>
+        <p class="input group">
+            <input class="form-control" ng-model="lockDate" uib-datepicker-popup="yyyy-MM-dd" is-open="datePickerStatus.lockOpened"/>
+            <span class="input-group-btn">
+                <button type="button" class="btn btn-default" ng-click="lockDateOpen($event)">
+                    <i class="glyphicon glyphicon-calendar"></i>
+                </button>
+            </span>
+            <uib-timepicker ng-model="lockTime" minute-step="5"/>
+        </p>
+    </div>
+    <div class="form-group">
+        <label>Week End</label>
+        <p class="input group">
+            <input class="form-control" ng-model="endDate" uib-datepicker-popup="yyyy-MM-dd" is-open="datePickerStatus.endOpened"/>
+            <span class="input-group-btn">
+                <button type="button" class="btn btn-default" ng-click="endDateOpen($event)">
+                    <i class="glyphicon glyphicon-calendar"></i>
+                </button>
+            </span>
+            <uib-timepicker ng-model="endTime" minute-step="5"/>
+        </p>
+    </div>
     <input type="button" class="btn btn-primary" value="Save" ng-click="save()"></input>
 </form>

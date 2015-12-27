@@ -1,4 +1,4 @@
-var app = angular.module('DailyFantasyFootball', ['ngResource', 'ngRoute']);
+var app = angular.module('DailyFantasyFootball', ['ui.bootstrap', 'ngResource', 'ngRoute']);
 
 app.config(['$routeProvider', function($routeProvider){
     $routeProvider
@@ -21,6 +21,10 @@ app.config(['$routeProvider', function($routeProvider){
         .when('/addweek', {
             templateUrl: '/partials/week-form.html',
             controller: 'AddWeekCtrl'
+        })
+        .when('/week/:id', {
+            templateUrl: '/partials/week-form.html',
+            controller: 'EditWeekCtrl'
         })
         .when('/login', {
             templateUrl: 'partials/login.html'

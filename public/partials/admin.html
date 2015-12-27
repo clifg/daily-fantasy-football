@@ -10,7 +10,9 @@
 <h2>Weeks</h2>
 <ul>
     <li ng-repeat='week in weeks'>
-    Week {{week.weekNumber}}
+        <a href="#/week/{{week.weekNumber}}">
+            Week {{week.weekNumber}}
+        </a>
     </li>
 </ul>
 <a href='#/addweek'>Add a week</a>

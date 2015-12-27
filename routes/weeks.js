@@ -32,15 +32,37 @@ router.post('/', function(req, res) {
     Week.findOne({ weekNumber: req.body.weekNumber }, function(err, week) {
         if (week) {
             // Already have that week! Should PUT or DELETE it.
-            return res.sendStatus(400);
+            return res.status(400).send('Week already exists');
         }
 
         var week = new Week();
         week.weekNumber = req.body.weekNumber;
+        week.weekLockDate = req.body.weekLockDate;
+        week.weekEndDate = req.body.weekEndDate;
         
         week.save(function(err) {
             if (err) {
-                return res.sendStatus(400);
+                return res.status(400).send('Error saving week data');
+            }
+
+            res.json(week);
+        });
+    });
+});
+
+router.put('/:weekNumber', function(req, res) {
+    Week.findOne({ weekNumber: req.body.weekNumber }, function(err, week) {
+        if (err) {
+            return res.sendStatus(404);
+        }
+
+        week.weekNumber = req.body.weekNumber;
+        week.weekLockDate = req.body.weekLockDate;
+        week.weekEndDate = req.body.weekEndDate;
+
+        week.save(function(err) {
+            if (err) {
+                return res.sendStatus(500);
             }
 
             res.json(week);
