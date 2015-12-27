@@ -79,6 +79,7 @@ router.post('/:weekNumber/players', function(req, res) {
     player.position = req.body.position;
     player.team = req.body.team;
     player.salary = req.body.salary;
+    player.game = req.body.game;
 
     player.save(function(err) {
         if (err) {
