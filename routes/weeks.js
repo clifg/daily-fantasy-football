@@ -4,7 +4,6 @@ var router = express.Router();
 var passportConf = require('../config/passport');
 
 var Week = require('../models/week.js');
-var Player = require('../models/player.js');
 
 // TODO: protect these APIs
 
@@ -19,10 +18,14 @@ router.get('/', function(req, res) {
 });
 
 router.get('/:weekNumber', function(req, res) {
+    // We don't populate player data when only asked for the week data, since the client
+    // may not actually want it. We'll not send stats or anything either.
     Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
         if (err) {
             return res.sendStatus(404);
         }
+
+        week.players = undefined;
 
         res.json(week);
     });
@@ -39,6 +42,16 @@ router.post('/', function(req, res) {
         week.weekNumber = req.body.weekNumber;
         week.weekLockDate = req.body.weekLockDate;
         week.weekEndDate = req.body.weekEndDate;
+
+        var today = new Date();
+
+        if (week.lockDate < today) {
+            return res.status(400).send('Lock date cannot be before today');
+        }
+
+        if (week.weekEndDate < week.weekLockDate) {
+            return res.status(400).send('End date cannot be before lock date');
+        }
         
         week.save(function(err) {
             if (err) {
@@ -60,6 +73,16 @@ router.put('/:weekNumber', function(req, res) {
         week.weekLockDate = req.body.weekLockDate;
         week.weekEndDate = req.body.weekEndDate;
 
+        var today = new Date();
+
+        if (week.lockDate < today) {
+            return res.status(400).send('Lock date cannot be before today');
+        }
+
+        if (week.weekEndDate < week.weekLockDate) {
+            return res.status(400).send('End date cannot be before lock date');
+        }
+
         week.save(function(err) {
             if (err) {
                 return res.sendStatus(500);
@@ -67,6 +90,16 @@ router.put('/:weekNumber', function(req, res) {
 
             res.json(week);
         });
+    });
+});
+
+router.delete('/', function(req, res) {
+    Week.find().remove(function(err) {
+        if (err) {
+            return res.sendStatus(500);
+        }
+
+        return res.sendStatus(200);
     });
 });
 
@@ -84,62 +117,115 @@ router.delete('/:weekNumber', function(req, res) {
 });
 
 router.get('/:weekNumber/players', function(req, res) {
-    Player.find( { weekNumber: req.params.weekNumber }, function(err, players) {
+    // Since they're asing for the players, populate all player data for this week
+    Week.findOne({ weekNumber: req.params.weekNumber })
+        .populate('players.player')
+        .exec(function(err, week) {
         if (err) {
             return res.sendStatus(404);
         }
 
-        res.json(players);
-    });
-});
+        // We only include the stats for each player in the response if they asked for it.
+        // The stats are the largest part of the document response.
+        if (req.query.stats !== 'true') {
+            for (var i = 0; i < week.players.length; i++) {
+                week.players[i].stats = undefined;
+            }
+        }
 
-router.post('/:weekNumber/players', function(req, res) {
-    // TODO: Validate that the posted player doesn't appear to already exist...
-    var player = new Player();
-    player.weekNumber = req.params.weekNumber;
-    player.name = req.body.name;
-    player.position = req.body.position;
-    player.team = req.body.team;
-    player.salary = req.body.salary;
-    player.game = req.body.game;
-
-    player.save(function(err) {
-        if (err) {
-            // TODO: validate the input and send useful errors back
-            return res.sendStatus(400);
-        };
-
-        res.json(player);
+        res.json(week);
     });
 });
 
 router.delete('/:weekNumber/players', function(req, res) {
-    Player.find( { weekNumber: req.params.weekNumber } ).remove(function(err) {
-        if (err) {
-            return res.sendStatus(500);
+    Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
+        if (err) { 
+            return res.sendStatus(404);
         }
 
-        res.sendStatus(200);
+        week.players = [];
+
+        week.save(function(err) {
+            if (err) {
+                return res.sendStatus(500);
+            }
+
+            res.json(week);
+        });
     });
 });
 
-// TODO: weekNumber isn't actually important here. Should consider moving players to a 
-// top-level resource instead, since we're already filtering by weekNumber all the time
-// anyway.
-router.delete('/:weekNumber/players/:playerId', function(req, res) {
-    Player.findById(req.params.playerId, function(err, player) {
+router.get('/:weekNumber/players/:playerid', function(req, res) {
+    Week.findOne({ weekNumber: req.params.weekNumber })
+        .populate('players.player')
+        .exec(function(err, week) {
         if (err) {
             return res.sendStatus(404);
         }
 
-        player.remove(function(err) {
-            if (err) { 
+        // Find the player and return just that object.
+        // TODO: Refactor out code to find a player in a given week
+        for (var i = 0; i < week.players.length; i++) {
+            var p = week.players[i];
+            if (p.player.id === req.params.playerid) {
+                return res.json(p);
+            }
+        }
+
+        res.sendStatus(404)
+    });
+});
+
+router.delete('/:weekNumber/players/:playerid', function(req, res) {
+    Week.findOne({ weekNumber: req.params.weekNumber })
+        .populate('players.player')
+        .exec(function(err, week) {
+        if (err) {
+            return res.sendStatus(404);
+        }
+
+        for (var i = 0; i < week.players.length; i++) {
+            var p = week.players[i];
+            if (p.player.id === req.params.playerid) {
+                week.players.splice(i, 1);
+
+                return week.save(function(err) {
+                    if (err) {
+                        return res.sendStatus(500);
+                    }
+
+                    res.json(week);
+                });
+            }
+        }
+        res.sendStatus(404);
+    });
+})
+
+router.post('/:weekNumber/players', function(req, res) {
+    // TODO: Validate that the posted player doesn't appear to already exist...
+    Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
+        if (err) {
+            return res.sendStatus(404);
+        }
+
+        var player = {
+            player: req.body.player,
+            salary: req.body.salary,
+            game: req.body.game,
+            scoreOverride: req.body.scoreOverride
+        };
+
+        week.players.push(player);
+
+        week.save(function(err) {
+            if (err) {
                 return res.sendStatus(500);
             }
 
-            res.json(player);
+            return res.json(player);
         });
-    });
+    }); 
 });
 
 module.exports = router;

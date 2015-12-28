@@ -77,6 +77,8 @@ app.controller('AdminCtrl', ['$rootScope', '$scope', '$resource', '$location',
 
 app.controller('AddWeekCtrl', ['$scope', '$resource', '$location', '$routeParams',
     function($scope, $resource, $location, $routeParams) {
+        $scope.pageHeader = 'Add a week';
+
         $scope.datePickerStatus = {
             lockOpened: false,
             endOpened: false
@@ -108,6 +110,9 @@ app.controller('AddWeekCtrl', ['$scope', '$resource', '$location', '$routeParams
         $scope.endTime.setMinutes(0);
         $scope.endTime.setSeconds(0);
 
+        $scope.submitResult = {
+            isError: false
+        };
 
         $scope.save = function() {
             // TODO: check that $scope.week is valid
@@ -126,8 +131,6 @@ app.controller('AddWeekCtrl', ['$scope', '$resource', '$location', '$routeParams
                 $scope.lockTime.getMinutes(),
                 0);
 
-            $scope.week.weekLockDate = lockDateTime.toISOString();
-
             var endDateTime = new Date(
                 $scope.endDate.getFullYear(),
                 $scope.endDate.getMonth(),
@@ -136,15 +139,14 @@ app.controller('AddWeekCtrl', ['$scope', '$resource', '$location', '$routeParams
                 $scope.endTime.getMinutes(),
                 0);
 
+            $scope.week.weekLockDate = lockDateTime.toISOString();
             $scope.week.weekEndDate = endDateTime.toISOString();
-
-            console.log('LockDate: ' + lockDateTime.toString() + '(' + $scope.week.weekLockDate + ')');
-            console.log('EndDate: ' + endDateTime.toString() + '(' + $scope.week.weekEndDate + ')');
 
             Weeks.save($scope.week, function() {
                 $location.path('/admin');
-            }, function() {
-                // TODO: handle failures
+            }, function(err) {
+                $scope.submitResult.msg = err.data;
+                $scope.submitResult.isError = true;
             });
         };
     }
@@ -153,6 +155,8 @@ app.controller('AddWeekCtrl', ['$scope', '$resource', '$location', '$routeParams
 // TODO: Refactor shared code between this and the AddWeekCtrl
 app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParams',
     function($scope, $resource, $location, $routeParams) {
+        $scope.pageHeader = 'Edit week';
+
         var Weeks = $resource('/api/v1/weeks/:id', { id: '@_id' }, {
             update: { method: 'PUT' }
         });
@@ -165,6 +169,8 @@ app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParam
 
             $scope.endDate = new Date($scope.week.weekEndDate);
             $scope.endTime = new Date($scope.week.weekEndDate);
+
+            $scope.editingWeek = true;
 
         });
 
@@ -181,6 +187,10 @@ app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParam
             $scope.datePickerStatus.endOpened = true;
         };
 
+        $scope.submitResult = {
+            isError: false
+        };
+
         $scope.save = function() {
             // TODO: Validate other inputs, like dates, etc
 
@@ -194,8 +204,6 @@ app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParam
                 $scope.lockTime.getMinutes(),
                 0);
 
-            $scope.week.weekLockDate = lockDateTime.toISOString();
-
             var endDateTime = new Date(
                 $scope.endDate.getFullYear(),
                 $scope.endDate.getMonth(),
@@ -204,12 +212,22 @@ app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParam
                 $scope.endTime.getMinutes(),
                 0);
 
+            $scope.week.weekLockDate = lockDateTime.toISOString();
             $scope.week.weekEndDate = endDateTime.toISOString();
 
             console.log('LockDate: ' + lockDateTime.toString() + '(' + $scope.week.weekLockDate + ')');
             console.log('EndDate: ' + endDateTime.toString() + '(' + $scope.week.weekEndDate + ')');
 
             Weeks.update($scope.week, function() {
+                $location.path('/admin');
+            }, function(err) {
+                $scope.submitResult.msg = err.data;
+                $scope.submitResult.isError = true;
+            });
+        };
+
+        $scope.delete = function() {
+            Weeks.delete( { id: $scope.week.weekNumber }, function() {
                 $location.path('/admin');
             });
         };
