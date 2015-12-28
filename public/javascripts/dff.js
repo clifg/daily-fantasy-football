@@ -26,6 +26,10 @@ app.config(['$routeProvider', function($routeProvider){
             templateUrl: '/partials/week-form.html',
             controller: 'EditWeekCtrl'
         })
+        .when('/week/:id/players', {
+            templateUrl: '/partials/edit-players.html',
+            controller: 'EditPlayersCtrl'
+        })
         .when('/login', {
             templateUrl: 'partials/login.html'
         })

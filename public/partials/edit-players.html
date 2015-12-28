@@ -1,0 +1,46 @@
+<h1>{{pageHeader}}</h1>
+
+<form>
+    <div class="form-group">
+        <div class="container">
+            <form>
+                <div class="form-group">
+                    <div class="input-group">
+                        <div class="input-group-addon"><i class="fa fa-search"></i></div>
+                        <input type="text" class="form-control" placeholder="Search player names" ng-model="searchField"/>
+                    </div>
+                </div>
+            </form>
+                <table class="table table-bordered table-striped table-scrollable" style="height: 600px; overflow-y: scroll; display: block;">
+                    <thead style="width:100px;height:400px">
+                        <tr>
+                            <th class="col-sm-2">First Name</th>
+                            <th class="col-sm-2">Last Name</th>
+                            <th class="col-sm-2">Position</th>
+                            <th class="col-sm-2">Team</th>
+                            <th class="col-sm-2">Salary</th>
+                            <th class="col-sm-2">Matchup</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr ng-repeat="p in players | filter: playerFilter">
+                            <td class="col-sm-2">{{p.player.firstName}}</td>
+                            <td class="col-sm-2">{{p.player.lastName}}</td>
+                            <td class="col-sm-2">{{p.player.position}}</td>
+                            <td class="col-sm-2">{{p.player.team}}</td>
+                            <td class="col-sm-2">{{p.salary}}</td>
+                            <td class="col-sm-2">{{p.game.matchup}}</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+        </div>
+    </div>
+
+    <input type="button" class="btn btn-primary" value="Save" ng-click="save()"></input>
+    <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()"></input>
+    <uib-alert ng-show="submitResult.isError" type="danger">
+        {{submitResult.msg}}
+    </uib-alert>
+</form>

@@ -11,7 +11,7 @@
     <div class="form-group">
         <label>Week Lock</label>
         <p class="input group">
-            <input name="lockDate" class="form-control" required ng-model="lockDate" uib-datepicker-popup="yyyy-MM-dd" is-open="datePickerStatus.lockOpened"/>
+            <input name="lockDate" class="form-control" required ng-model="lockDate" uib-datepicker-popup="yyyy-MM-dd" is-open="datePickerStatus.lockOpened" disabled/>
             <span class="input-group-btn">
                 <button type="button" class="btn btn-default" ng-click="lockDateOpen($event)">
                     <i class="glyphicon glyphicon-calendar"></i>
@@ -26,7 +26,7 @@
     <div class="form-group">
         <label>Week End</label>
         <p class="input group">
-            <input name="endDate" class="form-control" required ng-model="endDate" uib-datepicker-popup="yyyy-MM-dd" is-open="datePickerStatus.endOpened"/>
+            <input name="endDate" class="form-control" required ng-model="endDate" uib-datepicker-popup="yyyy-MM-dd" is-open="datePickerStatus.endOpened" disabled/>
             <span class="input-group-btn">
                 <button type="button" class="btn btn-default" ng-click="endDateOpen($event)">
                     <i class="glyphicon glyphicon-calendar"></i>
@@ -38,9 +38,12 @@
             <uib-timepicker ng-model="endTime" minute-step="5"/>
         </p>
     </div>
-    <input type="button" class="btn btn-primary" value="Save" ng-click="save()" ng-disabled="weekForm.$invalid"></input>
-    <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()" ng-show="editingWeek"></input>
+    <div class="form-group" ng-show="editingWeek">
+        <a ng-href="#/week/{{weekNumber}}/players">Edit Players</a>
+    </div>
     <uib-alert ng-show="submitResult.isError" type="danger">
         {{submitResult.msg}}
     </uib-alert>
+    <input type="button" class="btn btn-primary" value="Save" ng-click="save()" ng-disabled="weekForm.$invalid"></input>
+    <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()" ng-show="editingWeek"></input>
 </form>

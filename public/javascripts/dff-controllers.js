@@ -17,7 +17,6 @@ app.controller('UserCtrl', ['$scope', '$resource', '$location', '$routeParams',
         });
 
         Users.get({ id: $routeParams.id }, function(user) {
-            console.log('*** got user');
             $scope.user = user;
         });
 
@@ -156,6 +155,7 @@ app.controller('AddWeekCtrl', ['$scope', '$resource', '$location', '$routeParams
 app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParams',
     function($scope, $resource, $location, $routeParams) {
         $scope.pageHeader = 'Edit week';
+        $scope.weekNumber = $routeParams.id;
 
         var Weeks = $resource('/api/v1/weeks/:id', { id: '@_id' }, {
             update: { method: 'PUT' }
@@ -237,5 +237,28 @@ app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParam
 app.controller('NavbarCtrl', ['$rootScope', '$scope', '$location', 
     function($rootScope, $scope, $location) {
         $scope.user = $rootScope.user;
+    }
+]);
+
+app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams',
+    function($scope, $resource, $routeParams) {
+        $scope.sortType = 'name';
+        $scope.sortReverse = false;
+        $scope.searchField = '';
+
+        var Weeks = $resource('/api/v1/weeks/:id/players', { id: '@_id'});
+
+        Weeks.get({ id: $routeParams.id }, function(week) {
+            $scope.players = week.players;
+        });
+
+        $scope.playerFilter = function(item) {
+            // Match against "First Last First" so we catch people who like to search both ways.
+            var matchString = item.player.firstName.toLowerCase() + ' ' 
+                + item.player.lastName.toLowerCase() + ' '
+                + item.player.firstName.toLowerCase();
+
+            return (matchString.indexOf($scope.searchField.toLowerCase()) != -1);
+        }
     }
 ]);
