@@ -209,14 +209,22 @@ router.post('/:weekNumber/players', function(req, res) {
             return res.sendStatus(404);
         }
 
-        var player = {
-            player: req.body.player,
-            salary: req.body.salary,
-            game: req.body.game,
-            scoreOverride: req.body.scoreOverride
-        };
+        if (!req.body.length) {
+            return res.sendStatus(400);
+        }
 
-        week.players.push(player);
+        for (var i = 0; i < req.body.length; i++) {
+            var newData = req.body[i];
+
+            var player = {
+                player: newData.player,
+                salary: newData.salary,
+                matchup: newData.matchup,
+                scoreOverride: newData.scoreOverride
+            };
+
+            week.players.push(player);
+        };
 
         week.save(function(err) {
             if (err) {
@@ -226,6 +234,29 @@ router.post('/:weekNumber/players', function(req, res) {
             return res.json(player);
         });
     }); 
+});
+
+router.put('/:weekNumber/players', function(req, res) {
+    Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
+        if (err) {
+            return res.sendStatus(404);
+        }
+
+        // TODO: Validate input
+
+        week.weekNumber = req.body.weekNumber;
+        week.weekLockDate = req.body.weekLockDate;
+        week.weekEndDate = req.body.weekEndDate;
+        week.players = req.body.players;
+
+        week.save(function(err) {
+            if (err) {
+                return res.sendStatus(500);
+            }
+
+            res.json(week);
+        });
+    });
 });
 
 module.exports = router;

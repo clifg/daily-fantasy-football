@@ -9,7 +9,30 @@ var Player = require('../models/player.js');
 // TODO: protect these APIs
 
 router.get('/', function(req, res) {
-    Player.find(function(err, players) {
+    // The request contains query parameters for finding a particular player
+    var queryFilter = {};
+
+    // These regex filters are not very efficient, but there is a reasonable limit
+    // on the number of NFL players in our pool, so it'll be plenty fast. If it were
+    // to become a problem, we can either force names to lower-case, or keep new fields
+    // of lower-case versions.
+    if (req.query.firstName) {
+        queryFilter.firstName = { $regex: new RegExp(req.query.firstName, 'i') };
+    }
+
+    if (req.query.lastName) {
+        queryFilter.lastName = { $regex: new RegExp(req.query.lastName, 'i') };
+    }
+
+    if (req.query.position) {
+        queryFilter.position = { $regex: new RegExp(req.query.position, 'i') };
+    }
+
+    if (req.query.team) {
+        queryFilter.team = { $regex: new RegExp(req.query.team, 'i') };
+    }
+        
+    Player.find(queryFilter, function(err, players) {
         if (err) {
             return res.sendStatus(404);
         }

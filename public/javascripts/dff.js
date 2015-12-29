@@ -67,10 +67,21 @@ app.run(['$rootScope', '$resource', '$location', function($rootScope, $resource,
     });
 }]);
 
+// TODO: Move directives to their own file
 app.directive('header', function() {
     return {
         restrict: 'A',
         templateUrl: 'partials/header.html',
         controller: 'NavbarCtrl'
     }
+});
+
+app.directive('onFileChange', function() {
+    return {
+        restrict: 'A',
+        link: function(scope, element, attrs) {
+            var onChangeHandler = scope.$eval(attrs.onFileChange);
+            element.bind('change', onChangeHandler);
+        }
+    };
 });

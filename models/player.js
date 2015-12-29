@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var playerSchema = new Schema({
-    firstName: { type: String, trim: true, required: true },
+    firstName: { type: String, trim: true },
     lastName: { type: String, trim: true, required: true },
     position: { type: String, trim: true, enum: ['QB', 'WR', 'RB', 'TE', 'DST'], required: true },
     // TODO: Add a team enum

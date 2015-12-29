@@ -8,12 +8,8 @@ var weekSchema = new Schema({
 
     players: [{
         player: { type: Schema.Types.ObjectId, ref: 'Player' },
-
         salary: { type: Number, min: 0, required: true },
-        game: {
-            matchup: { type: String, trim: true, required: true },
-            start: { type: Date, required: true }
-        },
+        matchup: { type: String, trim: true, required: true },
         stats: {
             // Offense
             passingYards: { type: Number, default: 0 },

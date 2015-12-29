@@ -240,25 +240,127 @@ app.controller('NavbarCtrl', ['$rootScope', '$scope', '$location',
     }
 ]);
 
-app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams',
-    function($scope, $resource, $routeParams) {
+app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$location',
+    function($scope, $resource, $routeParams, $location) {
         $scope.sortType = 'name';
         $scope.sortReverse = false;
         $scope.searchField = '';
 
-        var Weeks = $resource('/api/v1/weeks/:id/players', { id: '@_id'});
+        var WeekPlayers = $resource('/api/v1/weeks/:id/players', { id: '@_id'}, {
+            update: { method: 'PUT' }
+        });
 
-        Weeks.get({ id: $routeParams.id }, function(week) {
+        WeekPlayers.get({ id: $routeParams.id }, function(week) {
+            $scope.week = week;
             $scope.players = week.players;
         });
 
         $scope.playerFilter = function(item) {
-            // Match against "First Last First" so we catch people who like to search both ways.
+            // Match against "First Last First" so we cover people who like to search both ways.
             var matchString = item.player.firstName.toLowerCase() + ' ' 
                 + item.player.lastName.toLowerCase() + ' '
                 + item.player.firstName.toLowerCase();
 
             return (matchString.indexOf($scope.searchField.toLowerCase()) != -1);
+        };
+
+        var findOrCreatePlayer = function(player, callback) {
+            var Players = $resource('/api/v1/players');
+
+            Players.query({
+                firstName: player.firstName,
+                lastName: player.lastName,
+                position: player.position,
+                team: player.team
+            }, function(returnedPlayers) {
+                if (returnedPlayers.length > 0) {
+                    // We found an existing player, so return that player's id
+                    callback({ created: false, player: returnedPlayers[0]});
+                }
+                else {
+                    // Didn't find a player, so we'll create a new one
+                    Players.save(player, function(savedPlayer) {
+                        callback({ created: true, player: savedPlayer});
+                    }, function() {
+                        console.log('**** FAILURE!');
+                        console.dir(player);
+                    });
+                }
+            });
+            
+        };
+
+        $scope.parsePlayerFile = function(event) {
+            var playerFiles = event.target.files;
+
+            if (playerFiles.length != 1) {
+                return;
+            }
+
+            var playerFile = playerFiles[0];
+
+            var reader = new FileReader();
+            reader.readAsText(playerFile);
+
+            reader.onloadend = function() {
+                var lines = reader.result.split('\n');
+
+                // The first line may be a header, just check the first word for "Position"
+                var firstLineWords = lines[0].split(',');
+                var i = (firstLineWords[0].toLowerCase() === 'position') ? 1 : 0;
+                for (; i < lines.length; i++)
+                {
+                    var playerFields = lines[i].split(',');
+                    var player = {
+                        position: playerFields[0].toUpperCase().trim(),
+                        firstName: playerFields[1].split(' ', 1)[0].trim(),
+                        lastName: playerFields[1].substr(playerFields[1].indexOf(' ') + 1).trim(),
+                        team: playerFields[5].toUpperCase().trim()
+                    };
+
+                    if (player.position === 'DST')
+                    {
+                        // Special case for defenses. Put the team name as the last name and leave the first
+                        // name blank.
+                        player.lastName = playerFields[1].trim();
+                    }
+                    else
+                    {
+                        player.firstName = playerFields[1].split(' ', 1)[0].trim();
+                        player.lastName = playerFields[1].substr(playerFields[1].indexOf(' ') + 1).trim();
+                    }
+
+                    // We need to wrap this code in a function so we can capture the PlayerFields
+                    // since JS only supports global and function scope (not for loop scope).
+                    (function(playerFields) {
+                        findOrCreatePlayer(player, function(playerResult) {
+                            var newItem = {
+                                player: playerResult.player,
+                                salary: playerFields[2].trim(),
+                                matchup: playerFields[3].toUpperCase().split(' ', 1)[0].trim(),
+                                created: playerResult.created
+                            };
+                            $scope.players.push(newItem);
+                        });
+                    })(playerFields);
+                }
+            };
+        };
+
+        $scope.save = function() {
+            WeekPlayers.delete( {id: $routeParams.id}, function() {
+                WeekPlayers.save({ id: $routeParams.id}, $scope.week.players, function() {
+                    // TODO: Add flash message for success/fail
+                    $location.path('/week/' + $routeParams.id);
+                });
+            });
+        };
+
+        $scope.delete = function() {
+            WeekPlayers.delete({ id: $routeParams.id }, function() {
+                // TODO: Probably just reload table content?
+                $location.path('/week/' + $routeParams.id);
+            });
         }
     }
 ]);

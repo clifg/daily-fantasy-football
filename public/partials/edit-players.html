@@ -3,6 +3,9 @@
 <form>
     <div class="form-group">
         <div class="container">
+            <div class="form-group">
+                <input type="file" on-file-change="parsePlayerFile"></input>
+            </div>
             <form>
                 <div class="form-group">
                     <div class="input-group">
@@ -11,8 +14,9 @@
                     </div>
                 </div>
             </form>
-                <table class="table table-bordered table-striped table-scrollable" style="height: 600px; overflow-y: scroll; display: block;">
-                    <thead style="width:100px;height:400px">
+              <div style="height: 600px;overflow-y: auto;outline: 1px solid gray;">
+                <table class="table table-bordered table-striped table-scrollable">
+                    <thead style="width:100%">
                         <tr>
                             <th class="col-sm-2">First Name</th>
                             <th class="col-sm-2">Last Name</th>
@@ -20,6 +24,7 @@
                             <th class="col-sm-2">Team</th>
                             <th class="col-sm-2">Salary</th>
                             <th class="col-sm-2">Matchup</th>
+                            <th class="col-sm-2">New Player?</th>
                         </tr>
                     </thead>
 
@@ -30,11 +35,12 @@
                             <td class="col-sm-2">{{p.player.position}}</td>
                             <td class="col-sm-2">{{p.player.team}}</td>
                             <td class="col-sm-2">{{p.salary}}</td>
-                            <td class="col-sm-2">{{p.game.matchup}}</td>
-                        </tr>
+                            <td class="col-sm-2">{{p.matchup}}</td>
+                            <td class="col-sm-2">{{p.created ? 'Yes' : 'No'}}</td>
 
                     </tbody>
                 </table>
+              </div>
         </div>
     </div>
 
