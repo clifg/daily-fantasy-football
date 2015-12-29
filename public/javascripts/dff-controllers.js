@@ -114,6 +114,7 @@ app.controller('AddWeekCtrl', ['$scope', '$resource', '$location', '$routeParams
         };
 
         $scope.save = function() {
+            $scope.updating = true;
             // TODO: check that $scope.week is valid
 
             var Weeks = $resource('/api/v1/weeks');
@@ -142,10 +143,12 @@ app.controller('AddWeekCtrl', ['$scope', '$resource', '$location', '$routeParams
             $scope.week.weekEndDate = endDateTime.toISOString();
 
             Weeks.save($scope.week, function() {
+                $scope.updating = false;
                 $location.path('/admin');
             }, function(err) {
                 $scope.submitResult.msg = err.data;
                 $scope.submitResult.isError = true;
+                $scope.updating = false;
             });
         };
     }
@@ -192,6 +195,7 @@ app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParam
         };
 
         $scope.save = function() {
+            $scope.updating = true;
             // TODO: Validate other inputs, like dates, etc
 
             // Put the date/time inputs into the proper format
@@ -219,16 +223,21 @@ app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParam
             console.log('EndDate: ' + endDateTime.toString() + '(' + $scope.week.weekEndDate + ')');
 
             Weeks.update($scope.week, function() {
+                $scope.updating = false;
                 $location.path('/admin');
             }, function(err) {
                 $scope.submitResult.msg = err.data;
                 $scope.submitResult.isError = true;
+                $scope.updating = false;
             });
         };
 
         $scope.delete = function() {
             Weeks.delete( { id: $scope.week.weekNumber }, function() {
+                $scope.updating = false;
                 $location.path('/admin');
+            }, function() {
+                $scope.updating = false;
             });
         };
     }
