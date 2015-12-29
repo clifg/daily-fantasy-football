@@ -5,6 +5,10 @@
         <div class="container">
             <div class="form-group">
                 <input type="file" on-file-change="parsePlayerFile"></input>
+                <div ng-show="importStarted">
+                    <span>Import Progress: {{importDone}} / {{importMax}}</span>
+                    <uib-progressbar max="importMax" value="importDone" animate="false"></uib-progressbar>
+                </div>
             </div>
             <form>
                 <div class="form-group">

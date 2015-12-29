@@ -310,6 +310,14 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
                 // The first line may be a header, just check the first word for "Position"
                 var firstLineWords = lines[0].split(',');
                 var i = (firstLineWords[0].toLowerCase() === 'position') ? 1 : 0;
+
+                // Set up our progress bar state.
+                $scope.$apply(function() {
+                    $scope.importStarted = true;
+                    $scope.importMax = lines.length - i;
+                    $scope.importDone = 0;  
+                });
+
                 for (; i < lines.length; i++)
                 {
                     var playerFields = lines[i].split(',');
@@ -332,6 +340,12 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
                         player.lastName = playerFields[1].substr(playerFields[1].indexOf(' ') + 1).trim();
                     }
 
+                    // ng-repeat is pretty slow with big lists, so we'll gather up all of the new players
+                    // into a local array and reassign when we're done.
+                    var newPlayerList = [];
+                    var importDone = 0;
+                    var importMax = $scope.importMax;
+
                     // We need to wrap this code in a function so we can capture the PlayerFields
                     // since JS only supports global and function scope (not for loop scope).
                     (function(playerFields) {
@@ -342,7 +356,19 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
                                 matchup: playerFields[3].toUpperCase().split(' ', 1)[0].trim(),
                                 created: playerResult.created
                             };
-                            $scope.players.push(newItem);
+
+                            //$scope.players.push(newItem);
+                            newPlayerList.push(newItem);
+
+                            importDone++;
+                            // The progress bar UI is more responsive and still looks good if we update scope every 5th item.
+                            if (!(importDone % 5) || (importDone == importMax)) {
+                                $scope.importDone = importDone;
+                            }
+
+                            if (importDone == importMax) {
+                                $scope.players = newPlayerList;
+                            }
                         });
                     })(playerFields);
                 }
