@@ -8,6 +8,15 @@
                 <div ng-show="importStarted">
                     <span>Import Progress: {{importDone}} / {{importMax}}</span>
                     <uib-progressbar max="importMax" value="importDone" animate="false"></uib-progressbar>
+                    <uib-alert ng-show="importResult.errorCount > 0" type="danger">
+                        {{importResult.errorCount}} records failed to import!
+                    </uib-alert>
+                    <uib-alert ng-show="importResult.createdCount > 0" type="warning">
+                        {{importResult.createdCount}} new player records were created
+                    </uib-alert>
+                    <uib-alert ng-show="importResult.successCount > 0" type="info">
+                        {{importResult.successCount}} records imported successfully, click Save to save them
+                    </uib-alert>
                 </div>
             </div>
             <form>
@@ -28,28 +37,25 @@
                             <th class="col-sm-2">Team</th>
                             <th class="col-sm-2">Salary</th>
                             <th class="col-sm-2">Matchup</th>
-                            <th class="col-sm-2">New Player?</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        <tr ng-repeat="p in players | filter: playerFilter">
+                        <tr ng-repeat="p in players | filter: playerFilter" ng-class="p.created ? 'warning' : ''">
                             <td class="col-sm-2">{{p.player.firstName}}</td>
                             <td class="col-sm-2">{{p.player.lastName}}</td>
                             <td class="col-sm-2">{{p.player.position}}</td>
                             <td class="col-sm-2">{{p.player.team}}</td>
                             <td class="col-sm-2">{{p.salary}}</td>
                             <td class="col-sm-2">{{p.matchup}}</td>
-                            <td class="col-sm-2">{{p.created ? 'Yes' : 'No'}}</td>
-
                     </tbody>
                 </table>
               </div>
         </div>
     </div>
 
-    <input type="button" class="btn btn-primary" value="Save" ng-click="save()" ng-disabled="updating"></input>
-    <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()" ng-disabled="updating"></input>
+    <input type="button" class="btn btn-primary" value="Save" ng-click="save()" ng-disabled="updating || importing"></input>
+    <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()" ng-disabled="updating || importing"></input>
     <img style="height: 35px; width:35px" src="/images/spinner.gif" ng-show="updating" />
     <uib-alert ng-show="submitResult.isError" type="danger">
         {{submitResult.msg}}

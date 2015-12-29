@@ -283,15 +283,16 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
             }, function(returnedPlayers) {
                 if (returnedPlayers.length > 0) {
                     // We found an existing player, so return that player's id
-                    callback({ created: false, player: returnedPlayers[0]});
+                    callback({ success: true, created: false, player: returnedPlayers[0]});
                 }
                 else {
                     // Didn't find a player, so we'll create a new one
                     Players.save(player, function(savedPlayer) {
-                        callback({ created: true, player: savedPlayer});
+                        callback({ success: true, created: true, player: savedPlayer});
                     }, function() {
                         console.log('**** FAILURE!');
                         console.dir(player);
+                        callback({ success: false });
                     });
                 }
             });
@@ -311,6 +312,7 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
             reader.readAsText(playerFile);
 
             reader.onloadend = function() {
+                $scope.importing = true;
                 $scope.players = [];
 
                 var lines = reader.result.split('\n');
@@ -353,19 +355,40 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
                     var newPlayerList = [];
                     var importDone = 0;
                     var importMax = $scope.importMax;
+                    var errorCount = 0;
+
+                    $scope.importResult = {
+                        errorCount: 0,
+                        successCount: 0,
+                        createdCount: 0
+                    };
+
+                    var importResult = {
+                        errorCount: 0,
+                        successCount: 0,
+                        createdCount: 0
+                    };
 
                     // We need to wrap this code in a function so we can capture the PlayerFields
                     // since JS only supports global and function scope (not for loop scope).
                     (function(playerFields) {
                         findOrCreatePlayer(player, function(playerResult) {
-                            var newItem = {
-                                player: playerResult.player,
-                                salary: playerFields[2].trim(),
-                                matchup: playerFields[3].toUpperCase().split(' ', 1)[0].trim(),
-                                created: playerResult.created
-                            };
+                            if (!playerResult.success) {
+                                importResult.errorCount++;
+                            } else {
+                                var newItem = {
+                                    player: playerResult.player,
+                                    salary: playerFields[2].trim(),
+                                    matchup: playerFields[3].toUpperCase().split(' ', 1)[0].trim(),
+                                    created: playerResult.created
+                                };
 
-                            newPlayerList.push(newItem);
+                                newPlayerList.push(newItem);
+                                importResult.successCount++;
+                                if (newItem.created) {
+                                    importResult.createdCount++;
+                                }
+                            }
 
                             importDone++;
                             // The progress bar UI is more responsive and still looks good if we update scope every 5th item.
@@ -375,6 +398,8 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
 
                             if (importDone == importMax) {
                                 $scope.players = newPlayerList;
+                                $scope.importResult = importResult;
+                                $scope.importing = false;
                             }
                         });
                     })(playerFields);
