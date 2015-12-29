@@ -251,7 +251,6 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
         });
 
         WeekPlayers.get({ id: $routeParams.id }, function(week) {
-            $scope.week = week;
             $scope.players = week.players;
         });
 
@@ -357,7 +356,6 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
                                 created: playerResult.created
                             };
 
-                            //$scope.players.push(newItem);
                             newPlayerList.push(newItem);
 
                             importDone++;
@@ -376,18 +374,26 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
         };
 
         $scope.save = function() {
+            $scope.updating = true;
             WeekPlayers.delete( {id: $routeParams.id}, function() {
-                WeekPlayers.save({ id: $routeParams.id}, $scope.week.players, function() {
+                WeekPlayers.save({ id: $routeParams.id}, $scope.players, function() {
+                    $scope.updating = false;
                     // TODO: Add flash message for success/fail
                     $location.path('/week/' + $routeParams.id);
+                }, function() {
+                    $scope.updating = false;
                 });
             });
         };
 
         $scope.delete = function() {
+            $scope.updating = true;
             WeekPlayers.delete({ id: $routeParams.id }, function() {
+                $scope.updating = false;
                 // TODO: Probably just reload table content?
                 $location.path('/week/' + $routeParams.id);
+            }, function() {
+                $scope.updating = false;
             });
         }
     }

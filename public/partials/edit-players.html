@@ -48,8 +48,9 @@
         </div>
     </div>
 
-    <input type="button" class="btn btn-primary" value="Save" ng-click="save()"></input>
-    <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()"></input>
+    <input type="button" class="btn btn-primary" value="Save" ng-click="save()" ng-disabled="updating"></input>
+    <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()" ng-disabled="updating"></input>
+    <img style="height: 35px; width:35px" src="/images/spinner.gif" ng-show="updating" />
     <uib-alert ng-show="submitResult.isError" type="danger">
         {{submitResult.msg}}
     </uib-alert>
