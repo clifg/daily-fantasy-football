@@ -38,8 +38,8 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
   secret: secrets.sessionSecret,
-  cookie: { maxAge: 60000 },
-  store: new MongoStore({ url: secrets.db, autoReconnect: true })
+  cookie: { maxAge: 60000, expires: new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000)},
+  store: new MongoStore({ mongooseConnection: mongoose.connection, autoReconnect: true })
 }));
 app.use(flash());
 app.use(passport.initialize());
