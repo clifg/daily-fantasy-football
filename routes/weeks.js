@@ -42,6 +42,7 @@ router.post('/', function(req, res) {
         week.weekNumber = req.body.weekNumber;
         week.weekLockDate = req.body.weekLockDate;
         week.weekEndDate = req.body.weekEndDate;
+        week.state = 'open';
 
         var today = new Date();
 
@@ -72,6 +73,7 @@ router.put('/:weekNumber', function(req, res) {
         week.weekNumber = req.body.weekNumber;
         week.weekLockDate = req.body.weekLockDate;
         week.weekEndDate = req.body.weekEndDate;
+        week.state   = req.body.state || week.state;
 
         var today = new Date();
 

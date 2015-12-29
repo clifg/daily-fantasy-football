@@ -1,0 +1,69 @@
+#!/usr/bin/env node
+
+var secrets = require('../config/secrets');
+var mongoose = require('mongoose');
+var Week = require('../models/week.js');
+var async = require('async');
+
+mongoose.connect(secrets.db);
+
+var asyncTasks = [];
+
+function updateLockAndEnd(callback) {
+    Week.find( { state: { $ne: 'completed' }}, function(err, weeks) {
+        if (err) {
+            console.log(' ! Error getting weeks!');
+            return callback();
+        }
+
+        var today = new Date();
+        console.log('About to process ' + weeks.length + ' weeks...');
+        console.log('Today: ' + today);
+
+        async.forEach(weeks, function(week, itrCallback) {
+            var dirty = false;
+
+            console.log(' - Processing week number ' + week.weekNumber);
+            console.log('   State     :' + week.state);
+            console.log('   LockDate  :' + week.weekLockDate);
+            console.log('   EndDate   :' + week.weekEndDate);
+
+            if (week.weekEndDate < today) {
+                // End date has passed, so close the week
+                console.log('   *** Updating state to completed');
+                week.state = 'completed';
+                dirty = true;
+            } else if ((week.weekLockDate < today) && (week.state === 'open')) {
+                console.log('   *** Updating state to locked');
+                week.state = 'locked';
+                dirty = true;
+            }
+
+            if (dirty) {
+                // We updated the week so save it
+                week.save(function(err) {
+                    if (err) {
+                        console.log('   *** error saving week: ' + err.data);
+                    } else {
+                        console.log('   *** done!');
+                    }
+
+                    itrCallback();
+                })
+            } else {
+                itrCallback();
+            }
+        }, function(err) {
+            console.log('Finished processing all weeks...');
+            callback();
+        });
+    });
+}
+
+async.series([
+    function(callback) {
+        updateLockAndEnd(callback);
+    }
+], function() {
+    process.exit();
+});

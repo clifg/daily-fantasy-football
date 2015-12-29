@@ -272,6 +272,8 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
             return (matchString.indexOf($scope.searchField.toLowerCase()) != -1);
         };
 
+        // TODO: Query for all players once, and match against that. There's a larger window for race conditions
+        // but doing this one at a time is obviously quite slow.
         var findOrCreatePlayer = function(player, callback) {
             var Players = $resource('/api/v1/players');
 
@@ -290,8 +292,6 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
                     Players.save(player, function(savedPlayer) {
                         callback({ success: true, created: true, player: savedPlayer});
                     }, function() {
-                        console.log('**** FAILURE!');
-                        console.dir(player);
                         callback({ success: false });
                     });
                 }
