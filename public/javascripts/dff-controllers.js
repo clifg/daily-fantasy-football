@@ -303,6 +303,8 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
             reader.readAsText(playerFile);
 
             reader.onloadend = function() {
+                $scope.players = [];
+
                 var lines = reader.result.split('\n');
 
                 // The first line may be a header, just check the first word for "Position"
