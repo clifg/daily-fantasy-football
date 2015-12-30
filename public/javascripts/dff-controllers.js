@@ -6,6 +6,13 @@ app.controller('HomeCtrl', ['$scope', '$resource',
 
         Weeks.query(function(weeks) {
             $scope.weeks = weeks;
+
+            for (var i = 0; i < $scope.weeks.length; i++) {
+                if ($scope.weeks[i].state !== 'completed') {
+                    $scope.currentWeek = $scope.weeks[i];
+                    break;
+                }
+            }
         });
     }
 ]);

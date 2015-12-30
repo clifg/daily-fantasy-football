@@ -1,7 +1,9 @@
 <h1>Home Page</h1>
 <br>
-<ul>
-    <li ng-repeat='week in weeks'>
-    Week {{week.weekNumber}}
-    </li>
-</ul>
+<div ng-if="currentWeek">
+    <p>Current week: Week {{currentWeek.weekNumber}}</p>
+</div>
+
+<div ng-if="!currentWeek">
+    <p>No current week open for contests!</p>
+</div>
