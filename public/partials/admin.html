@@ -1,19 +1,21 @@
-<h1>Admin Page</h1>
-<h2>Users</h2>
-<ul>
-    <li ng-repeat='user in users'>
-        <a href="/#/user/{{user._id}}">
-            {{user.profile.name}} ({{user.profile.email}})
-        </a>
-    </li>
-</ul>
-<h2>Weeks</h2>
-<ul>
-    <li ng-repeat='week in weeks'>
-        <a href="#/week/{{week.weekNumber}}">
-            Week {{week.weekNumber}}
-        </a>
-        <p>State: {{week.state}}</p>
-    </li>
-</ul>
-<a href='#/addweek'>Add a week</a>
+<div class="container">
+    <h1>Admin Page</h1>
+    <h2>Users</h2>
+    <ul>
+        <li ng-repeat='user in users'>
+            <a href="/#/user/{{user._id}}">
+                {{user.profile.name}} ({{user.profile.email}})
+            </a>
+        </li>
+    </ul>
+    <h2>Weeks</h2>
+    <ul>
+        <li ng-repeat='week in weeks'>
+            <a href="#/editweek/{{week.weekNumber}}">
+                Week {{week.weekNumber}}
+            </a>
+            <p>State: {{week.state}}</p>
+        </li>
+    </ul>
+    <a href='#/addweek'>Add a week</a>
+</div>

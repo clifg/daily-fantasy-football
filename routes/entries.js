@@ -33,6 +33,8 @@ router.get('/', function(req, res) {
 });
 
 router.get('/:id', function(req, res) {
+    // TODO: Update this API so we don't return roster data for other users' rosters before
+    // the lock date.
     Entry.findById(req.params.id)
         .populate('user', 'profile')
         .populate('contest')

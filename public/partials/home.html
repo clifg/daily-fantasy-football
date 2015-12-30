@@ -1,9 +1,17 @@
-<h1>Home Page</h1>
-<br>
-<div ng-if="currentWeek">
-    <p>Current week: Week {{currentWeek.weekNumber}}</p>
-</div>
-
-<div ng-if="!currentWeek">
-    <p>No current week open for contests!</p>
+<div class="container">
+    <h1>Welcome!</h1>
+    <div class="form-group">
+        <ul>
+            <li ng-repeat="week in weeks">
+                Week {{week.weekNumber}}
+                <ul>
+                    <li ng-repeat="contest in week.contests">
+                        <a href="#/contest/{{contest._id}}">
+                            {{contest.title}}
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
 </div>

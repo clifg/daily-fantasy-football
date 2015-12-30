@@ -6,6 +6,10 @@ app.config(['$routeProvider', function($routeProvider){
             templateUrl: 'partials/home.html',
             controller: 'HomeCtrl'
         })
+        .when('/contest/:id', {
+            templateUrl: 'partials/contest.html',
+            controller: 'ContestCtrl'
+        })
         .when('/user/:id', {
             templateUrl: 'partials/user.html',
             controller: 'UserCtrl'
@@ -22,11 +26,11 @@ app.config(['$routeProvider', function($routeProvider){
             templateUrl: '/partials/week-form.html',
             controller: 'AddWeekCtrl'
         })
-        .when('/week/:id', {
+        .when('/editweek/:id', {
             templateUrl: '/partials/week-form.html',
             controller: 'EditWeekCtrl'
         })
-        .when('/week/:id/players', {
+        .when('/editweek/:id/players', {
             templateUrl: '/partials/edit-players.html',
             controller: 'EditPlayersCtrl'
         })

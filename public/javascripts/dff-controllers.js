@@ -4,12 +4,29 @@ app.controller('HomeCtrl', ['$scope', '$resource',
     function($scope, $resource) {
         var Weeks = $resource('/api/v1/weeks');
 
-        Weeks.query(function(weeks) {
+        Weeks.query({ contests: true }, function(weeks) {
             $scope.weeks = weeks;
 
             for (var i = 0; i < $scope.weeks.length; i++) {
                 if ($scope.weeks[i].state !== 'completed') {
                     $scope.currentWeek = $scope.weeks[i];
+                    break;
+                }
+            }
+        });
+    }
+]);
+
+app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParams',
+    function($scope, $rootScope, $resource, $routeParams) {
+        var Contests = $resource('/api/v1/contests/:id');
+
+        Contests.get({ id: $routeParams.id }, function(contest) {
+            $scope.contest = contest;
+
+            for (var i = 0; i < contest.entries.length; i++) {
+                if (contest.entries[i].user.id === $rootScope.user.id) {
+                    $scope.myEntry = contest.entries[i];
                     break;
                 }
             }
@@ -463,7 +480,7 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
                 WeekPlayers.save({ id: $routeParams.id}, $scope.players, function() {
                     $scope.updating = false;
                     // TODO: Add flash message for success/fail
-                    $location.path('/week/' + $routeParams.id);
+                    $location.path('/editweek/' + $routeParams.id);
                 }, function() {
                     $scope.updating = false;
                 });
@@ -475,7 +492,7 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
             WeekPlayers.delete({ id: $routeParams.id }, function() {
                 $scope.updating = false;
                 // TODO: Probably just reload table content?
-                $location.path('/week/' + $routeParams.id);
+                $location.path('/editweek/' + $routeParams.id);
             }, function() {
                 $scope.updating = false;
             });

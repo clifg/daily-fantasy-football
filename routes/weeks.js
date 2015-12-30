@@ -1,14 +1,17 @@
 var express = require('express');
 var router = express.Router();
+var async = require('async');
 
 var passportConf = require('../config/passport');
 
-var Week = require('../models/week.js');
+var Week = require('../models/week');
+var Contest = require('../models/contest');
 
 // TODO: protect these APIs
 
 router.get('/', function(req, res) {
     Week.find({}, null, {sort: {weekNumber: 1}})
+        .lean()
         .select(req.query.players !== 'true' 
             ? '-players'
             : req.query.stats !== 'true' 
@@ -19,8 +22,27 @@ router.get('/', function(req, res) {
         if (err) {
             return res.sendStatus(404);
         }
+        
+        if (req.query.contests === 'true') {
+            async.each(weeks, function(week, callback) {
+                Contest.find({ week: week }, function(err, contests) {
+                    if (err) {
+                        return callback(err);
+                    }
 
-        res.json(weeks);
+                    week.contests = contests;
+                    return callback();
+                });
+            }, function(err) {
+                if (err) {
+                    return res.sendStatus(500);
+                }
+
+                return res.json(weeks);
+            });
+        } else {
+            return res.json(weeks);
+        }
     });
 });
 
@@ -28,13 +50,25 @@ router.get('/:weekNumber', function(req, res) {
     // We don't populate player data when only asked for the week data, since the client
     // may not actually want it. We'll not send stats or anything either.
     Week.findOne({ weekNumber: req.params.weekNumber })
+        .lean()
         .select(req.query.players === 'true' ? '' : '-players')
         .exec(function(err, week) {
         if (err || (week == null)) {
             return res.sendStatus(404);
         }
 
-        res.json(week);
+        if (req.query.contests === 'true') {
+            Contest.find({ week: week }, function(err, contests) {
+                if (err) {
+                    return res.sendStatus(500);
+                }
+
+                week.contests = contests;
+                return res.json(week);
+            });
+        } else {
+            return res.json(week);
+        }
     });
 });
 

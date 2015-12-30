@@ -66,6 +66,8 @@ passport.use(new FacebookStrategy(secrets.facebook, function(req, accessToken, r
     }
 }));
 
+// TODO: These feel like they should be part of the user, or some other service, not
+// the passport config. Consider moving them.
 exports.isAuthenticated = function(req, res, next) {
     if (req.isAuthenticated()) {
         return next();

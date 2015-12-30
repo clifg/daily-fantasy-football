@@ -26,7 +26,8 @@ router.get('/', function(req, res) {
             // We need to use "_id" because these are lean json objects, not mongoose models!
             Entry.find({ contest: contest._id })
                 .populate('user', 'profile')
-                .populate('roster')
+                .populate(req.query.roster === 'true' ? 'roster' : '')
+                .select(req.query.roster === 'true' ? '' : '-roster')
                 .exec(function(err, entries) {
                 if (err) {
                     return callback(err);
@@ -105,6 +106,7 @@ router.get('/:id', function(req, res) {
             return res.sendStatus(404);
         }
 
+        // TODO: Don't send data about other users' rosters before the lock date.
         Entry.find({ contest: contest._id })
             .populate('user', 'profile')
             .populate('roster')

@@ -22,7 +22,7 @@
       <ul ng-if="user" class="nav navbar-nav navbar-right">
         <li class="dropdown">
           <a class="dropdown-toggle" data-toggle="dropdown">
-            <img ng-src="{{user.profile.picture ? user.profile.picture : null}}" ng-show="user.profile.picture"/>
+            <img class="img-circle" ng-src="{{user.profile.picture ? user.profile.picture : null}}" ng-show="user.profile.picture"/>
             {{user.profile.name}}
             <i class="caret"></i>
           </a>

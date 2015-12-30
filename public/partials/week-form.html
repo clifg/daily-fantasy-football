@@ -1,51 +1,54 @@
-<h1>{{pageHeader}}</h1>
+<div class="container">
+    <h1>{{pageHeader}}</h1>
 
-<form name="weekForm">
-    <div class="form-group">
-        <label>Number</label>
-        <input name="weekNumber" class="form-control" required ng-model="week.weekNumber"></input>
-        <uib-alert ng-show="weekForm.weekNumber.$error.required && weekForm.weekNumber.$dirty" type="danger">
-            Must provide a week number!
-        </uib-alert>
-    </div>
-    <div class="form-group">
-        <label>Week Lock</label>
-        <p class="input group">
-            <input name="lockDate" class="form-control" required ng-model="lockDate" uib-datepicker-popup="yyyy-MM-dd" is-open="datePickerStatus.lockOpened" disabled/>
-            <span class="input-group-btn">
-                <button type="button" class="btn btn-default" ng-click="lockDateOpen($event)">
-                    <i class="glyphicon glyphicon-calendar"></i>
-                </button>
-            </span>
-            <uib-alert ng-show="weekForm.lockDate.$error.required && weekForm.lockDate.$dirty" type="danger">
-                Must provide a lock date!
+    <form name="weekForm">
+        <div class="form-group">
+            <label>Number</label>
+            <input name="weekNumber" class="form-control" required ng-model="week.weekNumber"></input>
+            <uib-alert ng-show="weekForm.weekNumber.$error.required && weekForm.weekNumber.$dirty" type="danger">
+                Must provide a week number!
             </uib-alert>
-            <uib-timepicker ng-model="lockTime" minute-step="5"/>
-        </p>
-    </div>
-    <div class="form-group">
-        <label>Week End</label>
-        <p class="input group">
-            <input name="endDate" class="form-control" required ng-model="endDate" uib-datepicker-popup="yyyy-MM-dd" is-open="datePickerStatus.endOpened" disabled/>
-            <span class="input-group-btn">
-                <button type="button" class="btn btn-default" ng-click="endDateOpen($event)">
-                    <i class="glyphicon glyphicon-calendar"></i>
-                </button>
-            </span>
-            <uib-alert ng-show="weekForm.endDate.$error.required && weekForm.endDate.$dirty" type="danger">
-                Must provide an end date!
+        </div>
+        <div class="form-group">
+            <label>Week Lock</label>
+            <p class="input group">
+                <input name="lockDate" class="form-control" required ng-model="lockDate" uib-datepicker-popup="yyyy-MM-dd" is-open="datePickerStatus.lockOpened" disabled/>
+                <span class="input-group-btn">
+                    <button type="button" class="btn btn-default" ng-click="lockDateOpen($event)">
+                        <i class="glyphicon glyphicon-calendar"></i>
+                    </button>
+                </span>
+                <uib-alert ng-show="weekForm.lockDate.$error.required && weekForm.lockDate.$dirty" type="danger">
+                    Must provide a lock date!
+                </uib-alert>
+                <uib-timepicker ng-model="lockTime" minute-step="5"/>
+            </p>
+        </div>
+        <div class="form-group">
+            <label>Week End</label>
+            <p class="input group">
+                <input name="endDate" class="form-control" required ng-model="endDate" uib-datepicker-popup="yyyy-MM-dd" is-open="datePickerStatus.endOpened" disabled/>
+                <span class="input-group-btn">
+                    <button type="button" class="btn btn-default" ng-click="endDateOpen($event)">
+                        <i class="glyphicon glyphicon-calendar"></i>
+                    </button>
+                </span>
+                <uib-alert ng-show="weekForm.endDate.$error.required && weekForm.endDate.$dirty" type="danger">
+                    Must provide an end date!
+                </uib-alert>
+                <uib-timepicker ng-model="endTime" minute-step="5"/>
+            </p>
+        </div>
+        <div class="form-group" ng-show="editingWeek">
+            <a ng-href="#/editweek/{{weekNumber}}/players">Week Players</a>
+        </div>
+        <div class="form-group">
+            <uib-alert ng-show="submitResult.isError" type="danger">
+                {{submitResult.msg}}
             </uib-alert>
-            <uib-timepicker ng-model="endTime" minute-step="5"/>
-        </p>
-    </div>
-    <div class="form-group" ng-show="editingWeek">
-        <a ng-href="#/week/{{weekNumber}}/players">Edit Players</a>
-    </div>
-    <uib-alert ng-show="submitResult.isError" type="danger">
-        {{submitResult.msg}}
-    </uib-alert>
-    <input type="button" class="btn btn-primary" value="Save" ng-click="save()" ng-disabled="weekForm.$invalid" ng-disabled="updating"></input>
-    <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()" ng-show="editingWeek" ng-disabled="updating"></input>
-    <img style="height: 35px; width:35px" src="/images/spinner.gif" ng-show="updating" />
-
-</form>
+            <input type="button" class="btn btn-primary" value="Save" ng-click="save()" ng-disabled="weekForm.$invalid" ng-disabled="updating"></input>
+            <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()" ng-show="editingWeek" ng-disabled="updating"></input>
+            <img style="height: 35px; width:35px" src="/images/spinner.gif" ng-show="updating" />
+        </div>
+    </form>
+</div>
