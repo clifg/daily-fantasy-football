@@ -8,7 +8,14 @@ var Week = require('../models/week.js');
 // TODO: protect these APIs
 
 router.get('/', function(req, res) {
-    Week.find({}, null, {sort: {weekNumber: 1}}, function(err, weeks) {
+    Week.find({}, null, {sort: {weekNumber: 1}})
+        .select(req.query.players !== 'true' 
+            ? '-players'
+            : req.query.stats !== 'true' 
+                ? '-players.stats'
+                : '')
+        .populate('players.player')
+        .exec(function(err, weeks) {
         if (err) {
             return res.sendStatus(404);
         }
@@ -20,12 +27,12 @@ router.get('/', function(req, res) {
 router.get('/:weekNumber', function(req, res) {
     // We don't populate player data when only asked for the week data, since the client
     // may not actually want it. We'll not send stats or anything either.
-    Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
+    Week.findOne({ weekNumber: req.params.weekNumber })
+        .select(req.query.players === 'true' ? '' : '-players')
+        .exec(function(err, week) {
         if (err || (week == null)) {
             return res.sendStatus(404);
         }
-
-        week.players = undefined;
 
         res.json(week);
     });
@@ -122,17 +129,10 @@ router.get('/:weekNumber/players', function(req, res) {
     // Since they're asing for the players, populate all player data for this week
     Week.findOne({ weekNumber: req.params.weekNumber })
         .populate('players.player')
+        .select(req.query.stats === 'true' ? '' : '-players.stats')
         .exec(function(err, week) {
         if (err) {
             return res.sendStatus(404);
-        }
-
-        // We only include the stats for each player in the response if they asked for it.
-        // The stats are the largest part of the document response.
-        if (req.query.stats !== 'true') {
-            for (var i = 0; i < week.players.length; i++) {
-                week.players[i].stats = undefined;
-            }
         }
 
         res.json(week);
@@ -166,7 +166,8 @@ router.get('/:weekNumber/players/:playerid', function(req, res) {
         }
 
         // Find the player and return just that object.
-        // TODO: Refactor out code to find a player in a given week
+        // TODO: Refactor out code to find a player in a given week. Or even better,
+        // there is probably a way to do this in the findOne call filtering above!
         for (var i = 0; i < week.players.length; i++) {
             var p = week.players[i];
             if (p.player.id === req.params.playerid) {
