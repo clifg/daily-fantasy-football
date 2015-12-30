@@ -19,6 +19,8 @@ var login = require('./routes/login');
 var users = require('./routes/users');
 var weeks = require('./routes/weeks');
 var players = require('./routes/players');
+var contests = require('./routes/contests');
+var entries = require('./routes/entries');
 
 var app = express();
 
@@ -63,6 +65,8 @@ app.use('/api/v1/login', login);
 app.use('/api/v1/users', users);
 app.use('/api/v1/weeks', weeks);
 app.use('/api/v1/players', players);
+app.use('/api/v1/contests', contests);
+app.use('/api/v1/entries', entries);
 
 // Authentication with Facebook
 // TODO: Should this be moved under /api?

@@ -21,7 +21,7 @@ router.get('/:weekNumber', function(req, res) {
     // We don't populate player data when only asked for the week data, since the client
     // may not actually want it. We'll not send stats or anything either.
     Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
-        if (err) {
+        if (err || (week == null)) {
             return res.sendStatus(404);
         }
 
@@ -66,7 +66,7 @@ router.post('/', function(req, res) {
 
 router.put('/:weekNumber', function(req, res) {
     Week.findOne({ weekNumber: req.body.weekNumber }, function(err, week) {
-        if (err) {
+        if (err || (week == null)) {
             return res.sendStatus(404);
         }
 
@@ -107,13 +107,13 @@ router.delete('/', function(req, res) {
 
 router.delete('/:weekNumber', function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
-        if (err) {
+        if (err || (week == null)) {
             return res.sendStatus(404);
         }
 
         week.remove(function(err) {
             if (err) throw err;
-            res.json(week);
+            res.sendStatus(200);
         });
     });
 });
@@ -141,7 +141,7 @@ router.get('/:weekNumber/players', function(req, res) {
 
 router.delete('/:weekNumber/players', function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
-        if (err) { 
+        if (err || (week == null)) { 
             return res.sendStatus(404);
         }
 
@@ -161,7 +161,7 @@ router.get('/:weekNumber/players/:playerid', function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber })
         .populate('players.player')
         .exec(function(err, week) {
-        if (err) {
+        if (err || (week == null)) {
             return res.sendStatus(404);
         }
 
@@ -182,7 +182,7 @@ router.delete('/:weekNumber/players/:playerid', function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber })
         .populate('players.player')
         .exec(function(err, week) {
-        if (err) {
+        if (err || (week == null)) {
             return res.sendStatus(404);
         }
 
@@ -207,7 +207,7 @@ router.delete('/:weekNumber/players/:playerid', function(req, res) {
 router.post('/:weekNumber/players', function(req, res) {
     // TODO: Validate that the posted player doesn't appear to already exist...
     Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
-        if (err) {
+        if (err || (week == null)) {
             return res.sendStatus(404);
         }
 
@@ -240,7 +240,7 @@ router.post('/:weekNumber/players', function(req, res) {
 
 router.put('/:weekNumber/players', function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
-        if (err) {
+        if (err || (week == null)) {
             return res.sendStatus(404);
         }
 

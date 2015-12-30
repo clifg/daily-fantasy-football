@@ -37,7 +37,7 @@ router.delete('/me', passportConf.isAuthenticated, function(req, res) {
             user.remove(function(err) {
                 if (err) throw err;
 
-                res.json(user);
+                res.sendStatus(200);
             })
         })
     }
@@ -69,7 +69,7 @@ router.delete('/:id', passportConf.isAuthenticated, function(req, res) {
             user.remove(function(err) {
                 if (err) throw err;
 
-                res.json(user);
+                res.sendStatus(200);
             });
         });
     }

@@ -109,7 +109,7 @@ router.delete('/:id', function(req, res) {
                 return res.sendStatus(500);
             }
 
-            res.json(player);
+            res.sendStatus(200);
         });
     });
 });
