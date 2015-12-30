@@ -219,9 +219,6 @@ app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParam
             $scope.week.weekLockDate = lockDateTime.toISOString();
             $scope.week.weekEndDate = endDateTime.toISOString();
 
-            console.log('LockDate: ' + lockDateTime.toString() + '(' + $scope.week.weekLockDate + ')');
-            console.log('EndDate: ' + endDateTime.toString() + '(' + $scope.week.weekEndDate + ')');
-
             Weeks.update($scope.week, function() {
                 $scope.updating = false;
                 $location.path('/admin');
@@ -251,8 +248,8 @@ app.controller('NavbarCtrl', ['$rootScope', '$scope', '$location',
 
 app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$location',
     function($scope, $resource, $routeParams, $location) {
-        $scope.sortType = 'name';
-        $scope.sortReverse = false;
+        $scope.sortType = 'salary';
+        $scope.sortReverse = true;
         $scope.searchField = '';
 
         var WeekPlayers = $resource('/api/v1/weeks/:id/players', { id: '@_id'}, {
@@ -275,24 +272,45 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
         // TODO: Query for all players once, and match against that. There's a larger window for race conditions
         // but doing this one at a time is obviously quite slow.
         var findOrCreatePlayer = function(player, callback) {
-            var Players = $resource('/api/v1/players');
+            var Players = $resource('/api/v1/players', null, {
+                update: { method: 'PUT' }
+            });
 
+            // We query by name and position. Team could change from week to week.
             Players.query({
                 firstName: player.firstName,
                 lastName: player.lastName,
-                position: player.position,
-                team: player.team
+                position: player.position
             }, function(returnedPlayers) {
                 if (returnedPlayers.length > 0) {
-                    // We found an existing player, so return that player's id
-                    callback({ success: true, created: false, player: returnedPlayers[0]});
+                    // We found an existing player! See if the team as changed.
+                    if (returnedPlayers[0].team != player.team) {
+                        // The player changed teams, so update their player record.
+                        returnedPlayers[0].team = player.team;
+
+                        var UpdatePlayer = $resource('/api/v1/players/:id', { id: '@_id' }, {
+                            update: { method: 'PUT' }
+                        });
+
+                        UpdatePlayer.update(returnedPlayers[0], function() {
+                            return callback({ success: true, created: false, changed: true, player: returnedPlayers[0] });
+                        }, function() {
+                            console.log('Failed to update player record: ');
+                            console.dir(returnedPlayers[0]);
+                            return callback({ success: false, changed: true, player: returnedPlayers[0] });
+                        });
+                    } else {
+                        return callback({ success: true, created: false, player: returnedPlayers[0]});
+                    }
                 }
                 else {
                     // Didn't find a player, so we'll create a new one
                     Players.save(player, function(savedPlayer) {
-                        callback({ success: true, created: true, player: savedPlayer});
+                        return callback({ success: true, created: true, player: savedPlayer});
                     }, function() {
-                        callback({ success: false });
+                        console.log('Failed to create player record:');
+                        console.dir(player);
+                        return callback({ success: false, player: player});
                     });
                 }
             });
@@ -317,9 +335,17 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
 
                 var lines = reader.result.split('\n');
 
+                // First, remove empty lines. Sometimes the csv has those
+                for (var idx = 0; idx < lines.length; idx++) {
+                    if (lines[idx].trim() === "") {
+                        lines.splice(idx, 1);
+                        idx--;
+                    }
+                }
+
                 // The first line may be a header, just check the first word for "Position"
                 var firstLineWords = lines[0].split(',');
-                var i = (firstLineWords[0].toLowerCase() === 'position') ? 1 : 0;
+                var i = (firstLineWords[0].toLowerCase().replace(/\"/g, '').trim() === 'position') ? 1 : 0;
 
                 // Set up our progress bar state.
                 $scope.$apply(function() {
@@ -328,46 +354,53 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
                     $scope.importDone = 0;  
                 });
 
+                // ng-repeat is pretty slow with big lists, so we'll gather up all of the new players
+                // into a local array and reassign when we're done.
+                var newPlayerList = [];
+                var importDone = 0;
+                var importMax = $scope.importMax;
+                var errorCount = 0;
+
+                $scope.importResult = {
+                    errorCount: 0,
+                    errorNames: [],
+                    changedCount: 0,
+                    changedNames: [],
+                    successCount: 0,
+                    createdCount: 0
+                };
+
+                var importResult = {
+                    errorCount: 0,
+                    errorNames: [],
+                    changedCount: 0,
+                    changedNames: [],
+                    successCount: 0,
+                    createdCount: 0
+                };
+
                 for (; i < lines.length; i++)
                 {
+                    // TODO: Helper method for sanitizing strings from the csv
                     var playerFields = lines[i].split(',');
                     var player = {
-                        position: playerFields[0].toUpperCase().trim(),
-                        firstName: playerFields[1].split(' ', 1)[0].trim(),
-                        lastName: playerFields[1].substr(playerFields[1].indexOf(' ') + 1).trim(),
-                        team: playerFields[5].toUpperCase().trim()
+                        position: playerFields[0].toUpperCase().replace(/\"/g, '').trim(),
+                        firstName: playerFields[1].split(' ', 1)[0].replace(/\"/g, '').trim(),
+                        lastName: playerFields[1].substr(playerFields[1].indexOf(' ') + 1).replace(/\"/g, '').trim(),
+                        team: playerFields[5].toUpperCase().replace(/\"/g, '').trim()
                     };
 
                     if (player.position === 'DST')
                     {
                         // Special case for defenses. Put the team name as the last name and leave the first
                         // name blank.
-                        player.lastName = playerFields[1].trim();
+                        player.lastName = playerFields[1].replace(/\"/g, '').trim();
                     }
                     else
                     {
-                        player.firstName = playerFields[1].split(' ', 1)[0].trim();
-                        player.lastName = playerFields[1].substr(playerFields[1].indexOf(' ') + 1).trim();
+                        player.firstName = playerFields[1].split(' ', 1)[0].replace(/\"/g, '').trim();
+                        player.lastName = playerFields[1].substr(playerFields[1].indexOf(' ') + 1).replace(/\"/g, '').trim();
                     }
-
-                    // ng-repeat is pretty slow with big lists, so we'll gather up all of the new players
-                    // into a local array and reassign when we're done.
-                    var newPlayerList = [];
-                    var importDone = 0;
-                    var importMax = $scope.importMax;
-                    var errorCount = 0;
-
-                    $scope.importResult = {
-                        errorCount: 0,
-                        successCount: 0,
-                        createdCount: 0
-                    };
-
-                    var importResult = {
-                        errorCount: 0,
-                        successCount: 0,
-                        createdCount: 0
-                    };
 
                     // We need to wrap this code in a function so we can capture the PlayerFields
                     // since JS only supports global and function scope (not for loop scope).
@@ -375,11 +408,14 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
                         findOrCreatePlayer(player, function(playerResult) {
                             if (!playerResult.success) {
                                 importResult.errorCount++;
+                                importResult.errorNames.push(playerResult.player.position === 'DST' ?
+                                    playerResult.player.firstName :
+                                    playerResult.player.firstName + ' ' + playerResult.player.lastName);
                             } else {
                                 var newItem = {
                                     player: playerResult.player,
                                     salary: playerFields[2].trim(),
-                                    matchup: playerFields[3].toUpperCase().split(' ', 1)[0].trim(),
+                                    matchup: playerFields[3].toUpperCase().split(' ', 1)[0].replace(/\"/g, '').trim(),
                                     created: playerResult.created
                                 };
 
@@ -387,6 +423,13 @@ app.controller('EditPlayersCtrl', ['$scope', '$resource', '$routeParams', '$loca
                                 importResult.successCount++;
                                 if (newItem.created) {
                                     importResult.createdCount++;
+                                }
+
+                                if (playerResult.changed) {
+                                    importResult.changedCount++;
+                                    importResult.changedNames.push(playerResult.player.position === 'DST' ?
+                                        playerResult.player.firstName :
+                                        playerResult.player.firstName + ' ' + playerResult.player.lastName);
                                 }
                             }
 

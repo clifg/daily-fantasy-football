@@ -83,9 +83,6 @@ router.put('/:id', function(req, res) {
             return res.sendStatus(404);
         }
 
-        console.log('req firstname: ' + req.body.firstName);
-        console.log('player firstname: ' + player.firstName);
-
         player.firstName = req.body.firstName || player.firstName;
         player.lastName = req.body.lastName || player.lastName;
         player.position = req.body.position || player.position;

@@ -10,9 +10,22 @@
                     <uib-progressbar max="importMax" value="importDone" animate="false"></uib-progressbar>
                     <uib-alert ng-show="importResult.errorCount > 0" type="danger">
                         {{importResult.errorCount}} records failed to import!
+                        <ul>
+                            <li ng-repeat='name in importResult.errorNames'>
+                                {{name}}
+                            </li>
+                        </ul>
                     </uib-alert>
                     <uib-alert ng-show="importResult.createdCount > 0" type="warning">
                         {{importResult.createdCount}} new player records were created
+                    </uib-alert>
+                    <uib-alert ng-show="importResult.changedCount > 0" type="warning">
+                        {{importResult.changedCount}} players changed teams
+                        <ul>
+                            <li ng-repeat='name in importResult.changedNames'>
+                                {{name}}
+                            </li>
+                        </ul>
                     </uib-alert>
                     <uib-alert ng-show="importResult.successCount > 0" type="info">
                         {{importResult.successCount}} records imported successfully, click Save to save them
@@ -31,17 +44,41 @@
                 <table class="table table-bordered table-striped table-scrollable">
                     <thead style="width:100%">
                         <tr>
-                            <th class="col-sm-2">First Name</th>
-                            <th class="col-sm-2">Last Name</th>
-                            <th class="col-sm-2">Position</th>
-                            <th class="col-sm-2">Team</th>
-                            <th class="col-sm-2">Salary</th>
-                            <th class="col-sm-2">Matchup</th>
+                            <th class="col-sm-2" ng-click="sortType = 'player.firstName'; sortReverse = !sortReverse">
+                                First Name
+                                <span ng-show="sortType == 'player.firstName' && !sortReverse" class="fa fa-caret-down"></span>
+                                <span ng-show="sortType == 'player.firstName' && sortReverse" class="fa fa-caret-up"></span>
+                            </th>
+                            <th class="col-sm-2" ng-click="sortType = 'player.lastName'; sortReverse = !sortReverse">
+                                Last Name
+                                <span ng-show="sortType == 'player.lastName' && !sortReverse" class="fa fa-caret-down"></span>
+                                <span ng-show="sortType == 'player.lastName' && sortReverse" class="fa fa-caret-up"></span>
+                            </th>
+                            <th class="col-sm-2" ng-click="sortType = 'player.position'; sortReverse = !sortReverse">
+                                Position
+                                <span ng-show="sortType == 'player.position' && !sortReverse" class="fa fa-caret-down"></span>
+                                <span ng-show="sortType == 'player.position' && sortReverse" class="fa fa-caret-up"></span>
+                            </th>
+                            <th class="col-sm-2" ng-click="sortType = 'player.team'; sortReverse = !sortReverse">
+                                Team
+                                <span ng-show="sortType == 'player.team' && !sortReverse" class="fa fa-caret-down"></span>
+                                <span ng-show="sortType == 'player.team' && sortReverse" class="fa fa-caret-up"></span>
+                            </th>
+                            <th class="col-sm-2" ng-click="sortType = 'salary'; sortReverse = !sortReverse">
+                                Salary
+                                <span ng-show="sortType == 'salary' && !sortReverse" class="fa fa-caret-down"></span>
+                                <span ng-show="sortType == 'salary' && sortReverse" class="fa fa-caret-up"></span>
+                            </th>
+                            <th class="col-sm-2" ng-click="sortType = 'matchup'; sortReverse = !sortReverse">
+                                Matchup
+                                <span ng-show="sortType == 'matchup' && !sortReverse" class="fa fa-caret-down"></span>
+                                <span ng-show="sortType == 'matchup' && sortReverse" class="fa fa-caret-up"></span>
+                            </th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        <tr ng-repeat="p in players | filter: playerFilter" ng-class="p.created ? 'warning' : ''">
+                        <tr ng-repeat="p in players | filter: playerFilter | orderBy: sortType:sortReverse " ng-class="p.created ? 'warning' : ''">
                             <td class="col-sm-2">{{p.player.firstName}}</td>
                             <td class="col-sm-2">{{p.player.lastName}}</td>
                             <td class="col-sm-2">{{p.player.position}}</td>
