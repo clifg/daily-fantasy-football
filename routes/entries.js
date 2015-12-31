@@ -51,7 +51,7 @@ router.get('/:id', function(req, res) {
 router.post('/', function(req, res) {
     var entry = new Entry();
     entry.contest = req.body.contest;
-    entry.user = req.body.user;
+    entry.user = req.body.user || req.user;
     entry.roster = req.body.roster;
 
     // TODO: Validate that the contest, user, and player references (in the roster) are all valid

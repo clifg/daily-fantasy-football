@@ -109,7 +109,7 @@ router.get('/:id', function(req, res) {
         // TODO: Don't send data about other users' rosters before the lock date.
         Entry.find({ contest: contest._id })
             .populate('user', 'profile')
-            .populate('roster')
+            .populate('roster.player')
             .exec(function(err, entries) {
             if (err) { 
                 return res.sendStatus(500);

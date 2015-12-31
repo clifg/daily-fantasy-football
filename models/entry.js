@@ -4,7 +4,11 @@ var Schema = mongoose.Schema;
 var entrySchema = new Schema({
     contest: { type: Schema.Types.ObjectId, ref: 'Contest', required: true },
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    roster: [{ type: Schema.Types.ObjectId, ref: 'Player'}]
+    roster: [{
+        player: { type: Schema.Types.ObjectId, ref: 'Player'},
+        salary: { type: Number, min: 0, required: true },
+        matchup: { type: String, trim: true, required: true }
+    }]
     // TODO: Scores?
 });
 

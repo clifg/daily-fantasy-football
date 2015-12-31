@@ -20,17 +20,178 @@ app.controller('HomeCtrl', ['$scope', '$resource',
 app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParams',
     function($scope, $rootScope, $resource, $routeParams) {
         var Contests = $resource('/api/v1/contests/:id');
+        var Players = $resource('/api/v1/weeks/:weekNumber/players');
+
+        $scope.roster = [];
+
+        $scope.sortType = 'salary';
+        $scope.sortReverse = true;
+        $scope.searchField = '';
+
+        $scope.playerFilter = function(item) {
+            if (item.player.displayName.toLowerCase().indexOf($scope.searchField.toLowerCase()) != -1) {
+                // Matches the search box. See if the player is already in our roster or not
+                for (var i = 0; i < $scope.roster.length; i++) {
+                    if ($scope.roster[i].player._id === item.player._id) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
+        };
+
+        $scope.rosterSalary = 0;
+        $scope.contestLineup = [];
 
         Contests.get({ id: $routeParams.id }, function(contest) {
             $scope.contest = contest;
 
+            // Set the lineup array that the roster will fill-in.
+            // TODO: Refactor this into a helper method that takes the position as a param
+            // QBs
+            for (var i = 0; i < contest.positionCounts.QB; i++) {
+                $scope.contestLineup.push({
+                    position: 'QB'
+                });
+            }
+
+            // RB
+            for (var i = 0; i < contest.positionCounts.RB; i++) {
+                $scope.contestLineup.push({
+                    position: 'RB'
+                });
+            }
+
+            // WR
+            for (var i = 0; i < contest.positionCounts.WR; i++) {
+                $scope.contestLineup.push({
+                    position: 'WR'
+                });
+            }
+
+            // TE
+            for (var i = 0; i < contest.positionCounts.TE; i++) {
+                $scope.contestLineup.push({
+                    position: 'TE'
+                });
+            }
+
+            // FLEX
+            for (var i = 0; i < contest.positionCounts.FLEX; i++) {
+                $scope.contestLineup.push({
+                    position: 'FLEX'
+                });
+            }
+
+            // DST
+            for (var i = 0; i < contest.positionCounts.DST; i++) {
+                $scope.contestLineup.push({
+                    position: 'DST'
+                });
+            }
+
             for (var i = 0; i < contest.entries.length; i++) {
-                if (contest.entries[i].user.id === $rootScope.user.id) {
+                if (contest.entries[i].user._id === $rootScope.user._id) {
                     $scope.myEntry = contest.entries[i];
+                    $scope.roster = $scope.myEntry.roster;
+
+                    for (var i = 0; i < $scope.roster.length; i++) {
+                        $scope.addPlayer($scope.roster[i]);
+                    }
                     break;
                 }
             }
+
+            Players.get({ weekNumber: contest.week.weekNumber }, function(week) {
+                $scope.players = week.players;
+            });
         });
+
+        function flexAllowed(position) {
+            switch (position) {
+                case 'QB':
+                    return $scope.contest.qbFlex;
+                case 'RB':
+                    return $scope.contest.rbFlex;
+                case 'WR':
+                    return $scope.contest.wrFlex;
+                case 'TE': 
+                    return $scope.contest.teFlex;
+                default:
+                    return false;
+            };
+        };
+
+        $scope.addPlayer = function(item, addToRoster) {
+            // Determine if this player fits into one of the open slots
+            for (var i = 0; i < $scope.contestLineup.length; i++) {
+                if ((($scope.contestLineup[i].position === item.player.position) ||
+                    (($scope.contestLineup[i].position === 'FLEX') && flexAllowed(item.player.position))) &&
+                    !($scope.contestLineup[i].rosterEntry)) {
+
+                    $scope.contestLineup[i].rosterEntry = item;
+                    if (addToRoster) {
+                        $scope.roster.push(item);
+                    }
+                    
+                    $scope.rosterSalary += item.salary;
+                    $scope.searchField = '';
+
+                    break;
+                }
+            }            
+        };
+
+        $scope.removePlayer = function(index) {
+
+            for (var i = 0; i < $scope.roster.length; i++) {
+                if ($scope.roster[i].player._id === $scope.contestLineup[index].rosterEntry.player._id) {
+                    $scope.roster.splice(i, 1);
+                    $scope.rosterSalary -= $scope.contestLineup[index].rosterEntry.salary;
+
+                    $scope.contestLineup[index].rosterEntry = null;
+                    break;
+                }
+            }
+        };
+
+        $scope.save = function() {
+            if ($scope.rosterSalary > $scope.contest.salaryCap) {
+                // TODO: Salary cap error message
+                return;
+            }
+
+            $scope.updating = true;
+
+            var Entries = $resource('/api/v1/entries/:id', { id: "@_id" }, {
+                update: { method: 'PUT' }
+            });
+
+            if ($scope.myEntry) {
+                Entries.update($scope.myEntry, function(err) {
+                    $scope.updating = false;
+                    if (err) {
+                        // TODO: Show error to user
+                    }
+                });
+            } else {
+                var newEntry = {
+                    contest: $scope.contest._id,
+                    roster: $scope.roster
+                };
+
+                // Creating a brand new entry
+                Entries.save(newEntry, function(entry) {
+                    $scope.myEntry = entry;
+                    $scope.updating = false;
+                }, function() {
+                    // TODO: Show error to user
+                });
+            }
+        }
     }
 ]);
 
