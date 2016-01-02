@@ -66,6 +66,29 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
         var Contests = $resource('/api/v1/contests/:id');
         var Players = $resource('/api/v1/weeks/:weekNumber/players');
 
+        Contests.get({ id: $routeParams.id }, function(contest) {
+            $scope.contest = contest;
+        
+            // If the current user owns this contest or is an admin, they can delete it
+            $scope.canDelete = ($rootScope.user.isAdmin || ($rootScope.user._id === contest.owner._id));
+        });
+
+        $scope.delete = function() {
+            Contests.delete({ id: $scope.contest._id }, function() {
+                $location.path('/');
+            });
+        };
+    }
+]);
+
+app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$location', '$uibModal',
+    function($scope, $rootScope, $resource, $routeParams, $location, $uibModal) {
+        var Contests = $resource('/api/v1/contests/:id');
+        var Players = $resource('/api/v1/weeks/:weekNumber/players');
+
+        $scope.rosterSalary = 0;
+        $scope.contestLineup = [];
+
         $scope.roster = [];
         $scope.saveResult = {};
 
@@ -103,15 +126,7 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
             return false;
         };
 
-        $scope.rosterSalary = 0;
-        $scope.contestLineup = [];
-
         Contests.get({ id: $routeParams.id }, function(contest) {
-            $scope.contest = contest;
-
-            // If the current user owns this contest or is an admin, they can delete it
-            $scope.canDelete = ($rootScope.user.isAdmin || ($rootScope.user._id === contest.owner._id));
-
             // Set the lineup array that the roster will fill-in.
             // TODO: Refactor this into a helper method that takes the position as a param
             // QBs
@@ -156,9 +171,9 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
                 });
             }
 
-            for (var i = 0; i < contest.entries.length; i++) {
-                if (contest.entries[i].user._id === $rootScope.user._id) {
-                    $scope.myEntry = contest.entries[i];
+            for (var i = 0; i < $scope.contest.entries.length; i++) {
+                if ($scope.contest.entries[i].user._id === $rootScope.user._id) {
+                    $scope.myEntry = $scope.contest.entries[i];
                     $scope.roster = $scope.myEntry.roster;
 
                     for (var i = 0; i < $scope.roster.length; i++) {
@@ -305,13 +320,6 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
                     showErrorMessage('Error', 'Failed to save roster.');
                 });
             }
-        };
-
-        $scope.delete = function() {
-            console.log('deleting contest...');
-            Contests.delete({ id: $scope.contest._id }, function() {
-                $location.path('/');
-            });
         };
     }
 ]);
