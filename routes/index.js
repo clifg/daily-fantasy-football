@@ -3,7 +3,7 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Daily Fantasy Football' });
+  res.render('index', { title: process.env.DAILYFANTASY_BRAND || 'Daily Fantasy Football' });
 });
 
 module.exports = router;

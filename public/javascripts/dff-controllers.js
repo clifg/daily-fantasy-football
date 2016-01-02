@@ -475,9 +475,17 @@ app.controller('EditWeekCtrl', ['$scope', '$resource', '$location', '$routeParam
     }
 ]);
 
-app.controller('NavbarCtrl', ['$rootScope', '$scope', '$location', 
-    function($rootScope, $scope, $location) {
+app.controller('NavbarCtrl', ['$rootScope', '$scope', '$http', '$location', 
+    function($rootScope, $scope, $http, $location) {
         $scope.user = $rootScope.user;
+
+        $http.get('/api/v1/brand')
+            .success(function(data) {
+                $scope.brand = data;
+            })
+            .error(function() {
+                $scope.brand = 'Daily Fantasy Football';
+            });
     }
 ]);
 

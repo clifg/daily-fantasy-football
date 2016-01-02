@@ -68,6 +68,10 @@ app.use('/api/v1/players', players);
 app.use('/api/v1/contests', contests);
 app.use('/api/v1/entries', entries);
 
+app.get('/api/v1/brand', function (req, res) {
+  return res.status(200).send(process.env.DAILYFANTASY_BRAND || 'Daily Fantasy Football');
+});
+
 // Authentication with Facebook
 // TODO: Should this be moved under /api?
 app.get('/auth/facebook', function(req, res, next) {
