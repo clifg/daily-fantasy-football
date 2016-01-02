@@ -1,0 +1,136 @@
+<div class="container">
+    <h1>Create a new contest</h1>
+
+    <form name="contestForm" class="form-horizontal">
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Title</label>
+            <div class="col-sm-6">
+                <input name="title" class="form-control" required ng-model="contest.title"></input>
+                <uib-alert ng-show="contestForm.title.$error.required && contestForm.title.$dirty" type="danger">
+                    Must provide a title!
+                </uib-alert>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Note</label>
+            <div class="col-sm-6">
+                <textarea name="note" class="form-control" ng-model="contest.note" rows=3></textarea>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Salary Cap</label>
+            <div class="col-sm-4">
+                <div class="input-group">
+                    <div class="input-group-addon">$</div>
+                    <input name="salaryCap" type="text" class="form-control" required ng-model="contest.salaryCap"></input>
+                </div>
+                <uib-alert ng-show="contestForm.salaryCap.$error.required && contestForm.salaryCap.$dirty" type="danger">
+                    Must provide a salary cap!
+                </uib-alert>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Quarterbacks</label>
+            <div class="col-sm-1">
+                <select class="form-control" ng-model="contest.positionCounts.QB">
+                    <option>1</option>
+                    <option>2</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Running Backs</label>
+            <div class="col-sm-1">
+                <select class="form-control" ng-model="contest.positionCounts.RB">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Wide Receivers</label>
+            <div class="col-sm-1">
+                <select class="form-control" ng-model="contest.positionCounts.WR">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Tight Ends</label>
+            <div class="col-sm-1">
+                <select class="form-control" ng-model="contest.positionCounts.TE">
+                    <option>1</option>
+                    <option>2</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Flex</label>
+            <div class="col-sm-1">
+                <select class="form-control" ng-model="contest.positionCounts.FLEX">
+                    <option>1</option>
+                    <option>2</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Defense / Special Teams</label>
+            <div class="col-sm-1">
+                <select class="form-control" ng-model="contest.positionCounts.DST">
+                    <option>1</option>
+                    <option>2</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">QB Flex</label>
+            <div class="col-sm-1">
+                <input type="checkbox" ng-model="contest.qbFlex">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">RB Flex</label>
+            <div class="col-sm-1">
+                <input type="checkbox" ng-model="contest.rbFlex">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">WR Flex</label>
+            <div class="col-sm-1">
+                <input type="checkbox" ng-model="contest.wrFlex">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">TE Flex</label>
+            <div class="col-sm-1">
+                <input type="checkbox" ng-model="contest.teFlex">
+            </div>
+        </div>
+
+
+        <div class="form-group">
+            <uib-alert ng-show="submitResult.isError" type="danger">
+                {{submitResult.msg}}
+            </uib-alert>
+            <input type="button" class="btn btn-primary" value="Save" ng-click="save()" ng-disabled="contestForm.$invalid"></input>
+            <img style="height: 35px; width:35px" src="/images/spinner.gif" ng-show="updating" />
+        </div>
+    </form>
+</div>

@@ -1,5 +1,9 @@
 <div class="container">
-    <h1>{{contest.title}}</h1>
+
+    <h1>
+        {{contest.title}}
+        <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()" ng-show="canDelete" ng-disabled="updating"></input>
+    </h1>
 
     <!-- TODO: Find a good way to refactor these three states to different partials. -->
     <!-- If the contest is open -->
@@ -173,9 +177,11 @@
                 <div class="form-input">
                     <div class="col-md-6">
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <input type="button" class="btn btn-primary" value="Save" ng-click="save()" ng-disabled="updating"></input>
                         <img style="height: 35px; width:35px" src="/images/spinner.gif" ng-show="updating" />
+                        <!--uib-alert type="success" ng-show="saveResult.success">Saved!</uib-alert-->
+                        <label ng-show="saveResult.success" style="margin-left: 10px;color: green">Saved!</label>
                     </div>
                 </div>
             </div>

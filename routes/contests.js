@@ -128,7 +128,13 @@ router.delete('/', function(req, res) {
             return res.sendStatus(500);
         }
 
-        return res.sendStatus(200);
+        Entry.find().remove(function(err) {
+            if (err) {
+                return res.sendStatus(500);
+            }
+
+            return res.sendStatus(200);
+        })
     });
 });
 
@@ -141,7 +147,13 @@ router.delete('/:id', function(req, res) {
         contest.remove(function(err) {
             if (err) throw err;
 
-            res.sendStatus(200);
+            Entry.find({contest: contest}).remove(function(err) {
+                if (err) {
+                    return res.sendStatus(500);
+                }
+
+                return res.sendStatus(200);
+            });
         });
     });
 });

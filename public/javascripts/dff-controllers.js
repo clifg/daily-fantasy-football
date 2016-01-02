@@ -13,8 +13,8 @@ app.controller('HomeCtrl', ['$scope', '$resource', '$location',
                 if ($scope.weeks[i].state !== 'completed') {
                     SingleWeek.get({ id: $scope.weeks[i].weekNumber, contests: true }, function(currentWeek) {
                         $scope.currentWeek = currentWeek;
-
                         $scope.friendlyLockDate = moment(currentWeek.weekLockDate).calendar();
+                        $scope.contestCreateAllowed = (currentWeek.state === 'open');
                     });
                     break;
                 }
@@ -22,18 +22,52 @@ app.controller('HomeCtrl', ['$scope', '$resource', '$location',
         });
 
         $scope.selectContest = function(contestId) {
-            console.log('selected contest id: ' + contestId);
             $location.path('/contest/' + contestId);
+        };
+
+        $scope.createContest = function() {
+            $location.path('/newcontest/' + $scope.currentWeek._id);
         };
     }
 ]);
 
-app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$uibModal',
-    function($scope, $rootScope, $resource, $routeParams, $uibModal) {
+app.controller('CreateContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$location',
+    function($scope, $rootScope, $resource, $routeParams, $location) {
+        $scope.contest = {
+            salaryCap: 50000,
+            positionCounts: {
+                QB: '1',
+                RB: '2',
+                WR: '3',
+                TE: '1',
+                FLEX: '1',
+                DST: '1'
+            },
+            qbFlex: false,
+            rbFlex: true,
+            wrFlex: true,
+            teFlex: false
+        };
+
+        $scope.save = function() {
+            $scope.contest.week = $routeParams.weekId;
+            $scope.contest.owner = $rootScope.user._id;
+            Contests = $resource('/api/v1/contests');
+
+            Contests.save($scope.contest, function(contest) {
+                $location.path('/contest/' + contest._id);
+            });
+        };
+    }
+]);
+
+app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$location', '$uibModal',
+    function($scope, $rootScope, $resource, $routeParams, $location, $uibModal) {
         var Contests = $resource('/api/v1/contests/:id');
         var Players = $resource('/api/v1/weeks/:weekNumber/players');
 
         $scope.roster = [];
+        $scope.saveResult = {};
 
         $scope.sortType = 'salary';
         $scope.sortReverse = true;
@@ -74,6 +108,9 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
 
         Contests.get({ id: $routeParams.id }, function(contest) {
             $scope.contest = contest;
+
+            // If the current user owns this contest or is an admin, they can delete it
+            $scope.canDelete = ($rootScope.user.isAdmin || ($rootScope.user._id === contest.owner._id));
 
             // Set the lineup array that the roster will fill-in.
             // TODO: Refactor this into a helper method that takes the position as a param
@@ -167,6 +204,8 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
                     $scope.rosterSalary += item.salary;
                     $scope.searchField = '';
 
+                    $scope.saveResult.success = false;
+
                     success = true;
 
                     break;
@@ -203,6 +242,8 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
                     $scope.rosterSalary -= $scope.contestLineup[index].rosterEntry.salary;
 
                     $scope.contestLineup[index].rosterEntry = null;
+
+                    $scope.saveResult.success = false;
                     break;
                 }
             }
@@ -221,11 +262,11 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
             });
 
             if ($scope.myEntry) {
-                Entries.update($scope.myEntry, function(err) {
+                Entries.update($scope.myEntry, function() {
                     $scope.updating = false;
-                    if (err) {
-                        showErrorMessage('Error', 'Failed to save roster.');
-                    }
+                    $scope.saveResult.success = true;
+                }, function() {
+                    showErrorMessage('Error', 'Failed to save roster');
                 });
             } else {
                 var newEntry = {
@@ -237,11 +278,19 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
                 Entries.save(newEntry, function(entry) {
                     $scope.myEntry = entry;
                     $scope.updating = false;
+                    $scope.saveResult.success = true;
                 }, function() {
                     showErrorMessage('Error', 'Failed to save roster.');
                 });
             }
-        }
+        };
+
+        $scope.delete = function() {
+            console.log('deleting contest...');
+            Contests.delete({ id: $scope.contest._id }, function() {
+                $location.path('/');
+            });
+        };
     }
 ]);
 
@@ -329,6 +378,8 @@ app.controller('AddWeekCtrl', ['$scope', '$resource', '$location', '$routeParams
             endOpened: false
         };
 
+        // TODO: I don't think we actually need separate Dates for the date and time pickers. As
+        // long as each only touches their side of things, we should be fine. Need to test this...
         $scope.lockDate = new Date();
         $scope.lockTime = new Date();
 

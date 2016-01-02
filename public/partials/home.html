@@ -1,39 +1,57 @@
 <div class="container">
     <h1 style="text-align: center">Week {{currentWeek.weekNumber}}</h1>
     <h3 style="text-align: center">Rosters lock: {{friendlyLockDate}} </h3>
-    <div class="form-group">
 
-        <div style="height: 372px;overflow-y: auto;outline: 1px solid lightgray;">
-            <table class="table table-bordered table-striped table-scrollable">
-                <thead style="width:100%">
-                    <tr>
-                        <th class="col-sm-8">
-                            Contest
-                        </th>
-                        <th class="col-sm-3">
-                            Owner
-                        </th>
-                        <th class="col-sm-1">
-                            Entries
-                        </th>
-                    </tr>
-                </thead>
+    <row>
+    <div class="col-md-1">
+    </div>
 
-                <tbody>
-                    <tr ng-repeat="contest in currentWeek.contests" ng-click="selectContest(contest._id)">
-                        <td class="col-sm-8">{{contest.title}}</td>
-                        <td class="col-sm-3">
-                            <img 
-                                class="img-circle"
-                                ng-src="{{contest.owner.profile.picture ? contest.owner.profile.picture : null}}"
-                                ng-show="contest.owner.profile.picture"
-                                style="width: 25px; height: 25px; margin: -15px 5px -15px;"/>
-                            {{contest.owner.profile.name}}
-                        </td>
-                        <td class="col-sm-1">{{contest.entryCount}}</td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="col-md-10">
+        <div class="form-group">
+
+            <div style="height: 372px;overflow-y: auto;outline: 1px solid lightgray;">
+                <table class="table table-bordered table-striped table-scrollable">
+                    <thead style="width:100%">
+                        <tr>
+                            <th class="col-sm-8">
+                                Contest
+                            </th>
+                            <th class="col-sm-3">
+                                Owner
+                            </th>
+                            <th class="col-sm-1">
+                                Entries
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr ng-repeat="contest in currentWeek.contests" ng-click="selectContest(contest._id)">
+                            <td class="col-sm-8">
+                                <a ng-href='#/contest/{{contest._id}}'>
+                                    {{contest.title}}
+                                </a>
+                            </td>
+                            <td class="col-sm-3">
+                                <img 
+                                    class="img-circle"
+                                    ng-src="{{contest.owner.profile.picture ? contest.owner.profile.picture : null}}"
+                                    ng-show="contest.owner.profile.picture"
+                                    style="width: 25px; height: 25px; margin: -15px 5px -15px;"/>
+                                {{contest.owner.profile.name}}
+                            </td>
+                            <td class="col-sm-1">{{contest.entryCount}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
+        <div class="form-group">
+            <input type="button" class="btn btn-primary" value="Create a contest" ng-click="createContest()" ng-disabled="!contestCreateAllowed"></input>
+        </div>
+
+    </div>
+
+    <div class="col-md-1">
     </div>
 </div>

@@ -34,6 +34,10 @@ app.config(['$routeProvider', function($routeProvider){
             templateUrl: '/partials/edit-players.html',
             controller: 'EditPlayersCtrl'
         })
+        .when('/newcontest/:weekId', {
+            templateUrl: 'partials/contest-form.html',
+            controller: 'CreateContestCtrl'
+        })
         .when('/login', {
             templateUrl: 'partials/login.html'
         })
