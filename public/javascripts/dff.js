@@ -89,3 +89,41 @@ app.directive('onFileChange', function() {
         }
     };
 });
+
+app.directive('countdownTimer', ['$interval',
+    function($interval) {
+        return {
+            restrict: 'E',
+            scope: {
+                date: '@',
+                foo: '@'
+            },
+            link: function(scope, element) {
+                $interval(function() {
+                    var endDate = new Date(scope.date);
+
+                    var delta = Math.floor(endDate.getTime() - new Date().getTime());
+
+                    // Convert delta to seconds
+                    delta /= 1000;
+
+                    var hours = Math.floor(delta / (60 * 60));
+                    delta -= hours * (60 * 60);
+
+                    var minutes = Math.floor(delta / 60);
+                    delta -= minutes * 60;
+                    if (minutes < 10 ) { 
+                        minutes = '0' + minutes;
+                    }
+
+                    var seconds = Math.floor(delta);
+                    if (seconds < 10) {
+                        seconds = '0' + seconds;
+                    }
+
+                    element.text(hours + ':' + minutes + ":" + seconds);
+                }, 1000);
+            }
+        }
+    }
+]);

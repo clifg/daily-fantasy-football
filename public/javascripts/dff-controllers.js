@@ -17,8 +17,8 @@ app.controller('HomeCtrl', ['$scope', '$resource',
     }
 ]);
 
-app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParams',
-    function($scope, $rootScope, $resource, $routeParams) {
+app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$uibModal',
+    function($scope, $rootScope, $resource, $routeParams, $uibModal) {
         var Contests = $resource('/api/v1/contests/:id');
         var Players = $resource('/api/v1/weeks/:weekNumber/players');
 
@@ -141,6 +141,7 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
         };
 
         $scope.addPlayer = function(item, addToRoster) {
+            var success = false;
             // Determine if this player fits into one of the open slots
             for (var i = 0; i < $scope.contestLineup.length; i++) {
                 if ((($scope.contestLineup[i].position === item.player.position) ||
@@ -155,10 +156,33 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
                     $scope.rosterSalary += item.salary;
                     $scope.searchField = '';
 
+                    success = true;
+
                     break;
                 }
-            }            
+            }
+
+            if (!success) {
+                showErrorMessage('Error', 'No available roster slots for that player!');
+            }
         };
+
+        function showErrorMessage(title, message) {
+            $uibModal.open({
+                animation: true,
+                templateUrl: 'partials/simple-modal.html',
+                controller: 'SimpleModalCtrl',
+                size: 'sm',
+                resolve: {
+                    title: function() {
+                        return title;
+                    },
+                    message: function() {
+                        return message;
+                    }
+                }
+            });
+        }
 
         $scope.removePlayer = function(index) {
 
@@ -175,7 +199,7 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
 
         $scope.save = function() {
             if ($scope.rosterSalary > $scope.contest.salaryCap) {
-                // TODO: Salary cap error message
+                showErrorMessage('Error', 'Can\'t submit a roster over the salary cap!');
                 return;
             }
 
@@ -189,7 +213,7 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
                 Entries.update($scope.myEntry, function(err) {
                     $scope.updating = false;
                     if (err) {
-                        // TODO: Show error to user
+                        showErrorMessage('Error', 'Failed to save roster.');
                     }
                 });
             } else {
@@ -203,10 +227,21 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
                     $scope.myEntry = entry;
                     $scope.updating = false;
                 }, function() {
-                    // TODO: Show error to user
+                    showErrorMessage('Error', 'Failed to save roster.');
                 });
             }
         }
+    }
+]);
+
+app.controller('SimpleModalCtrl', ['$scope', '$uibModalInstance', 'title', 'message', 
+    function($scope, $uibModalInstance, title, message) {
+        $scope.title = title;
+        $scope.message = message;
+
+        $scope.ok = function() {
+            $uibModalInstance.close();
+        };
     }
 ]);
 
