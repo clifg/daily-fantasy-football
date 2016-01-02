@@ -188,27 +188,49 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
             };
         };
 
+        function addPlayerHelper(contestLineupSlot, item, roster) {
+            contestLineupSlot.rosterEntry = item;
+            if (roster) {
+                roster.push(item);
+            }
+
+            // TODO: This is gross. Refactor to clean up managing roster salary and other bits of
+            // state so it all happens in one place.
+            $scope.rosterSalary += item.salary;
+            $scope.searchField = '';
+
+            $scope.saveResult.success = false;
+        };
+
         $scope.addPlayer = function(item, addToRoster) {
             var success = false;
-            // Determine if this player fits into one of the open slots
-            for (var i = 0; i < $scope.contestLineup.length; i++) {
-                if ((($scope.contestLineup[i].position === item.player.position) ||
-                    (($scope.contestLineup[i].position === 'FLEX') && flexAllowed(item.player.position))) &&
-                    !($scope.contestLineup[i].rosterEntry)) {
-
-                    $scope.contestLineup[i].rosterEntry = item;
-                    if (addToRoster) {
-                        $scope.roster.push(item);
+            // Determine if this player fits into one of the open slots. First do a quick check to prioritize
+            // inserting into a FLEX position if we're on the FLEX filter.
+            if ((tabFilter === 'FLEX') && flexAllowed(item.player.position))
+            {
+                for (var i = 0; i < $scope.contestLineup.length; i++) {
+                    if (($scope.contestLineup[i].position === 'FLEX') &&
+                        !($scope.contestLineup[i].rosterEntry))
+                    {
+                        addPlayerHelper($scope.contestLineup[i], item, addToRoster ? $scope.roster : null);
+                        success = true;
                     }
-                    
-                    $scope.rosterSalary += item.salary;
-                    $scope.searchField = '';
+                }
+            }
 
-                    $scope.saveResult.success = false;
+            if (!success) {
+                // Not inserting a FLEX player so just look elsewhere.
+                for (var i = 0; i < $scope.contestLineup.length; i++) {
+                    if ((($scope.contestLineup[i].position === item.player.position) ||
+                        (($scope.contestLineup[i].position === 'FLEX') && flexAllowed(item.player.position))) &&
+                        !($scope.contestLineup[i].rosterEntry)) {
 
-                    success = true;
+                        addPlayerHelper($scope.contestLineup[i], item, addToRoster ? $scope.roster : null);
 
-                    break;
+                        success = true;
+
+                        break;
+                    }
                 }
             }
 
