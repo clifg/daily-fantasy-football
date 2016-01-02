@@ -33,8 +33,6 @@
                 </div>
             </div>
 
-
-
             <div class="row">
                 <div class="col-md-6">
                     <form>
@@ -47,11 +45,20 @@
                         </div>
                     </form>
 
-                    <div class="form-group">
-                
+                    <div style="margin-top:10px; margin-left:-1px">
+                        <uib-tabset>
+                            <uib-tab heading="QB" select="setTab('QB')"></uib-tab>
+                            <uib-tab heading="RB" select="setTab('RB')"></uib-tab>
+                            <uib-tab heading="WR" select="setTab('WR')"></uib-tab>
+                            <uib-tab heading="TE" select="setTab('TE')"></uib-tab>
+                            <uib-tab heading="FLEX" select="setTab('FLEX')"></uib-tab>
+                            <uib-tab heading="DST" select="setTab('DST')"></uib-tab>
+                            <uib-tab heading="All" select="setTab('All')"></uib-tab>
+                        </uib-tabset>
+                    </div>
 
-                    <div style="height: 372px;overflow-y: auto;outline: 1px solid gray;">
-                        <table class="table table-bordered table-striped table-scrollable">
+                    <div style="height: 372px;overflow-y: auto;outline: 1px solid lightgray;">
+                        <table class="table table-striped table-scrollable">
                             <thead style="width:100%">
                                 <tr>
                                     <th class="col-sm-2" ng-click="sortType = 'player.position'; sortReverse = !sortReverse">
@@ -92,25 +99,22 @@
                         </table>
                     </div>
 
-
-
-                    </div>
                 </div>
                 <div class="col-md-6">
 
                     <form>
-                        <div class="form-group">
-                                <h3><strong>Lineup</strong></h3>
-                                <div style="margin-bottom: 30px">
+                        <div>
+                            <h3><strong>Lineup</strong></h3>
+                            <div style="margin-bottom:72px">
                                 <h4>Remaining Salary: ${{contest.salaryCap - rosterSalary}}</h4>
-                                </div>
+                            </div>
                         </div>
                     </form>
 
                     <div class="form-group">
 
 
-                    <div style="height: 372px;overflow-y: auto;outline: 1px solid gray;">
+                    <div style="height: 372px;overflow-y: auto;outline: 1px solid lightgray;">
                         <table class="table table-bordered table-striped table-scrollable">
                             <thead style="width:100%">
                                 <tr>

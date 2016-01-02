@@ -28,6 +28,12 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
         $scope.sortReverse = true;
         $scope.searchField = '';
 
+        var tabFilter = 'QB';
+
+        $scope.setTab = function(filter) {
+            tabFilter = filter;
+        };
+
         $scope.playerFilter = function(item) {
             if (item.player.displayName.toLowerCase().indexOf($scope.searchField.toLowerCase()) != -1) {
                 // Matches the search box. See if the player is already in our roster or not
@@ -37,7 +43,16 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
                     }
                 }
 
-                return true;
+                switch(tabFilter) {
+                    case 'All':
+                        return true;
+
+                    case 'FLEX':
+                        return flexAllowed(item.player.position);
+
+                    default:
+                        return (tabFilter === item.player.position);
+                }
             }
 
             return false;
