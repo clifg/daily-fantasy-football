@@ -6,6 +6,7 @@ var passportConf = require('../config/passport');
 
 var Week = require('../models/week');
 var Contest = require('../models/contest');
+var Entry = require('../models/entry');
 
 // TODO: protect these APIs
 
@@ -58,13 +59,34 @@ router.get('/:weekNumber', function(req, res) {
         }
 
         if (req.query.contests === 'true') {
-            Contest.find({ week: week }, function(err, contests) {
+            Contest.find({ week: week })
+                .lean()
+                .populate('owner', 'profile')
+                .exec(function(err, contests) {
                 if (err) {
                     return res.sendStatus(500);
                 }
 
                 week.contests = contests;
-                return res.json(week);
+
+                // Also grab the number of entries for each contest
+                async.each(contests, function(contest, callback) {
+                    Entry.find({ contest: contest }, function(err, entries) {
+                        if (err) {
+                            return callback(err);
+                        }
+
+                        contest.entryCount = entries.length;
+                        return callback();
+                    });
+                    }, function(err) {
+                        if (err) {
+                            return res.sendStatus(500);
+                        }
+
+                        return res.json(week);
+                    }
+                );
             });
         } else {
             return res.json(week);

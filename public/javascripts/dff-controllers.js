@@ -1,19 +1,30 @@
+
 var app = angular.module('DailyFantasyFootball');
 
-app.controller('HomeCtrl', ['$scope', '$resource',
-    function($scope, $resource) {
+app.controller('HomeCtrl', ['$scope', '$resource', '$location',
+    function($scope, $resource, $location) {
         var Weeks = $resource('/api/v1/weeks');
+        var SingleWeek = $resource('/api/v1/weeks/:id');
 
         Weeks.query({ contests: true }, function(weeks) {
             $scope.weeks = weeks;
 
             for (var i = 0; i < $scope.weeks.length; i++) {
                 if ($scope.weeks[i].state !== 'completed') {
-                    $scope.currentWeek = $scope.weeks[i];
+                    SingleWeek.get({ id: $scope.weeks[i].weekNumber, contests: true }, function(currentWeek) {
+                        $scope.currentWeek = currentWeek;
+
+                        $scope.friendlyLockDate = moment(currentWeek.weekLockDate).calendar();
+                    });
                     break;
                 }
             }
         });
+
+        $scope.selectContest = function(contestId) {
+            console.log('selected contest id: ' + contestId);
+            $location.path('/contest/' + contestId);
+        };
     }
 ]);
 
