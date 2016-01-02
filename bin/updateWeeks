@@ -37,6 +37,12 @@ function updateLockAndEnd(callback) {
                 console.log('   *** Updating state to locked');
                 week.state = 'locked';
                 dirty = true;
+            } else if ((week.weekLockDate > today) && (week.state === 'locked')) {
+                // TODO: This shouldn't happen "in production" so maybe send an email to admins
+                // when this happens?
+                console.log('   *** Updating state to open');
+                week.state = 'open';
+                dirty = true;
             }
 
             if (dirty) {
