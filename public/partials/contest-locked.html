@@ -55,7 +55,10 @@
                                 <td class="col-sm-4">{{p.player.displayName}}</td>
                                 <td class="col-sm-3">{{p.matchup}}</td>
                                 <td class="col-sm-2">
-                                    <span ng-hide="setScoreMode">{{p.scoreOverride || '0'}}</span>
+                                    <div ng-hide="setScoreMode" ng-switch="!!p.scoreOverride">
+                                        <span ng-switch-when="true"><strong>{{p.scoreOverride}}</strong></span>
+                                        <span ng-switch-when="false">0</span>
+                                    </div>
                                     <input type="number" class="form-control" ng-show="setScoreMode" ng-model="p.editScoreOverride"></input>
                                 </td>
                             </tr>
