@@ -5,7 +5,6 @@
         <input type="button" class="btn btn-danger" value="Delete" ng-click="delete()" ng-show="canDelete" ng-disabled="updating"></input>
     </h1>
 
-    <!-- TODO: Find a good way to refactor these three states to different partials. -->
     <!-- If the contest is open -->
     <div ng-show="contest.week.state === 'open'">
         <div ng-include="'partials/contest-open.html'"></div>

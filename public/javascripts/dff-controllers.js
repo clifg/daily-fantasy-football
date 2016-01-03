@@ -64,7 +64,6 @@ app.controller('CreateContestCtrl', ['$scope', '$rootScope', '$resource', '$rout
 app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$location', '$uibModal',
     function($scope, $rootScope, $resource, $routeParams, $location, $uibModal) {
         var Contests = $resource('/api/v1/contests/:id');
-        var Players = $resource('/api/v1/weeks/:weekNumber/players');
 
         Contests.get({ id: $routeParams.id }, function(contest) {
             $scope.contest = contest;
@@ -81,11 +80,15 @@ app.controller('ContestCtrl', ['$scope', '$rootScope', '$resource', '$routeParam
     }
 ]);
 
-app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$location', '$uibModal',
-    function($scope, $rootScope, $resource, $routeParams, $location, $uibModal) {
+// TODO: This depends on the parent scope from ContestCtrl. That's probably okay for now but it would be
+// better to reduce the tight coupling here.
+app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$location', '$uibModal', '$timeout',
+    function($scope, $rootScope, $resource, $routeParams, $location, $uibModal, $timeout) {
         var Contests = $resource('/api/v1/contests/:id');
         var Players = $resource('/api/v1/weeks/:weekNumber/players');
 
+        // TODO: Create some real objects with methods for managing the roster, etc. Right now there are too
+        // many one-off pieces of state that all have to be kept in sync, and this won't scale (and it's ugly).
         $scope.rosterSalary = 0;
         $scope.contestLineup = [];
 
@@ -218,6 +221,9 @@ app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeP
         };
 
         $scope.addPlayer = function(item, addToRoster) {
+            // TODO: Track which player is the flex player. We need to store that bit so we can show the roster
+            // in the same way when the contest is running and completed.
+
             var success = false;
             // Determine if this player fits into one of the open slots. First do a quick check to prioritize
             // inserting into a FLEX position if we're on the FLEX filter.
@@ -319,6 +325,135 @@ app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeP
                 }, function() {
                     showErrorMessage('Error', 'Failed to save roster.');
                 });
+            }
+        };
+    }
+]);
+
+app.controller('ContestLockedCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$location',
+    function($scope, $rootScope, $resource, $routeParams, $location) {
+        var Contests = $resource('/api/v1/contests/:id');
+        var Players = $resource('/api/v1/weeks/:weekNumber/players');
+
+        $scope.setScoreMode = false;
+
+        Contests.get({ id: $routeParams.id }, function(contest) {
+            $scope.contest = contest;
+        
+            // If the current user owns this contest or is an admin, they can set score overrides
+            $scope.canSetScores = ($rootScope.user.isAdmin || ($rootScope.user._id === contest.owner._id));
+
+            // Set the edit score edit property for each player. This is just used in the client, and
+            // isn't directly sent back to the server.
+            $scope.contest.entries.forEach(function(entry) {
+                entry.roster.forEach(function(player) {
+                    player.editScoreOverride = player.scoreOverride;
+                });
+            });
+        });
+
+        function pushPositionPlayers(sourceRoster, destinationRoster, position) {
+            for (var i = 0; i < sourceRoster.length; i++) {
+                if (sourceRoster[i].player.position === position) {
+                    destinationRoster.push(sourceRoster[i]);
+                }
+            }
+        };
+
+        function orderEntryRoster(entry) {
+            var orderedRoster = [];
+
+            positionOrder = ['QB', 'WR', 'RB', 'TE', 'FLEX', 'DST'];
+
+            positionOrder.forEach(function(position) {
+                pushPositionPlayers(entry.roster, orderedRoster, position);
+            });
+
+            entry.roster = orderedRoster;
+        };
+
+        $scope.setRosterTab = function(entryId) {
+            for (var i = 0; i < $scope.contest.entries.length; i++) {
+                if ($scope.contest.entries[i]._id === entryId) {
+                    $scope.selectedEntry = $scope.contest.entries[i];
+                    orderEntryRoster($scope.selectedEntry);
+                    break;
+                }
+            }
+        };
+
+        $scope.getTotalPoints = function(entryId) {
+            if (!$scope.contest) {
+                // Contest hasn't been loaded yet.
+                return;
+            }
+
+            var entry;
+            var sum = 0;
+            for (var i = 0; i < $scope.contest.entries.length; i++) {
+                if ($scope.contest.entries[i]._id === entryId) {
+                    entry = $scope.contest.entries[i];
+                }
+            }
+
+            if (!entry) {
+                return;
+            }
+
+            for (var i = 0; i < entry.roster.length; i++) {
+                if (typeof entry.roster[i].scoreOverride != 'undefined') {
+                    // TODO: For now we only support the score override. Once we have stats, we'll use the override
+                    // if it's there, otherwise add up the stats.
+                    sum += entry.roster[i].scoreOverride;
+                }
+            }
+
+            return Math.round(sum * 100) / 100;
+        };
+
+        $scope.saveScores = function() {
+            // Iterate through every entry roster slot and if there is a score override set, put it to the server.
+            Player = $resource('/api/v1/weeks/:weekNumber/players/:playerId', null, {
+                update: { method: 'PUT' }
+            });
+
+            $scope.savingScores = true;
+            var noUpdates = true;
+
+            for (var i = 0; i < $scope.contest.entries.length; i++) {
+                for (var j = 0; j < $scope.contest.entries[i].roster.length; j++) {
+                    var rosterEntry = $scope.contest.entries[i].roster[j];
+                    if (rosterEntry.editScoreOverride != rosterEntry.scoreOverride) {
+                        noUpdates = false;
+
+                        // TODO: This doesn't actually work how it should. Need to learn how to use $q.
+                        (function(rosterEntry) {
+                            Player.get({ 
+                                weekNumber: $scope.contest.week.weekNumber,
+                                playerId: rosterEntry.player._id },
+                                function(player) {
+                                player.scoreOverride = rosterEntry.editScoreOverride || undefined;
+                                Player.update({
+                                    weekNumber: $scope.contest.week.weekNumber,
+                                    playerId: player.player._id
+                                }, player, function(player) {
+                                    rosterEntry.scoreOverride = rosterEntry.editScoreOverride;
+                                    $scope.setScoreMode = false;
+                                    $scope.savingScores = false;
+                                    $scope.saveSuccess = true;
+                                }, function() {
+                                    // TODO: error message
+                                    $scope.savingScores = false;
+                                });
+                            });
+                        })(rosterEntry);
+                    }
+                }
+            }
+
+            if (noUpdates) {
+                $scope.setScoreMode = false;
+                $scope.savingScores = false;
             }
         };
     }

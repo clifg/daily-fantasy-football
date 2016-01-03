@@ -235,6 +235,34 @@ router.get('/:weekNumber/players/:playerid', function(req, res) {
     });
 });
 
+// This is only used for setting the score override.
+router.put('/:weekNumber/players/:playerId', function(req, res) {
+    Week.findOne({ weekNumber: req.params.weekNumber })
+        .populate('players.player')
+        .exec(function(err, week) {
+        if (err || (week == null)) {
+            return res.sendStatus(404);
+        }
+
+        var foundIndex;
+
+        for (var i = 0; i < week.players.length; i++) {
+            if (week.players[i].player.id === req.params.playerId) {
+                week.players[i].scoreOverride = req.body.scoreOverride;
+                foundIndex = i;
+            }
+        }
+
+        week.save(function(err) {
+            if (err) {
+                return res.sendStatus(400);
+            }
+
+            return res.json(week.players[foundIndex]);
+        });
+    });
+});
+
 router.delete('/:weekNumber/players/:playerid', function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber })
         .populate('players.player')

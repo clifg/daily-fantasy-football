@@ -108,6 +108,7 @@ router.get('/:id', function(req, res) {
 
         // TODO: Don't send data about other users' rosters before the lock date.
         Entry.find({ contest: contest._id })
+            .lean()
             .populate('user', 'profile')
             .populate('roster.player')
             .exec(function(err, entries) {
@@ -117,7 +118,35 @@ router.get('/:id', function(req, res) {
 
             contest.entries = entries;
 
-            res.json(contest);
+            // Build up a list of every player in every entry, so we know who to look up for stats
+            // and score overrides.
+            var scoreOverrides = {};
+            for (var i = 0; i < entries.length; i++) {
+                for (var j = 0; j < entries[i].roster.length; j++) {
+                    scoreOverrides[entries[i]._id + entries[i].roster[j].player._id] = {
+                        rosterEntry: entries[i].roster[j]
+                    };
+                }
+            }
+
+            Week.findOne({ weekNumber: contest.week.weekNumber })
+                .lean()
+                .populate('players.player')
+                .exec(function(err, week) {
+                if (err) {
+                    return res.sendStatus(500);
+                }
+
+                for (var i = 0; i < week.players.length; i++) {
+                    for (var overrideId in scoreOverrides) {
+                        if (scoreOverrides[overrideId].rosterEntry.player._id.toString() === week.players[i].player._id.toString()) {
+                            scoreOverrides[overrideId].rosterEntry.scoreOverride = week.players[i].scoreOverride;
+                        }
+                    }
+                }
+
+                res.json(contest);
+            });
         });
     });
 });
