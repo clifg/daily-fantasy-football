@@ -53,7 +53,7 @@ app.config(['$routeProvider', function($routeProvider){
         });
 }]);
 
-app.run(['$rootScope', '$resource', '$location', function($rootScope, $resource, $location) {
+app.run(['$rootScope', '$resource', '$location', '$route', function($rootScope, $resource, $location, $route) {
     console.log('Running app.run function');
     $rootScope.$on('$routeChangeStart', function(event, next, current) {
         console.log('route change start...');
@@ -66,9 +66,10 @@ app.run(['$rootScope', '$resource', '$location', function($rootScope, $resource,
                 $rootScope.user = user;
             }, function() {
                 // If we fail, redirect the user to log in
-                if (next.templteUrl != 'partials/login.html')
+                if (next.templateUrl != 'partials/login.html')
                 {
                     $location.url('/login');
+                    $route.reload();
                 }
             });
         }
