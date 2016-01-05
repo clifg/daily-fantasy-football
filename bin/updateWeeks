@@ -96,7 +96,9 @@ var scoreNameMap = {
     'Hammond Jr., Frankie': 'Hammond, Frankie',
     'Jones, TJ': 'Jones, T.J.',
     'Bellamy, Joshua': 'Bellamy, Josh',
-    'Housler, Rob': 'Housler, Robert'
+    'Housler, Rob': 'Housler, Robert',
+    'Helu Jr., Roy': 'Helu, Roy',
+    'Powell, Walt': 'Powell, Walter'
 };
 
 // Annoying list of team abbreviations that don't match between our database and the scores database
@@ -107,7 +109,13 @@ var teamNameMap = {
     'GB': 'GBP',
     'SF': 'SFO',
     'JAX': 'JAC',
-    'NO': 'NOS'
+    'NO': 'NOS',
+    'SD': 'SDC'
+};
+
+// Annoying list of position abbreviations that don't match between out database and the scores database
+var positionNameMap = {
+    'DST': 'Def'
 };
 
 function processStats(callback) {
@@ -158,18 +166,25 @@ function processStats(callback) {
                     var missingScores = [];
 
                     for (var i = 0; i < week.players.length; i++) {
-                        var searchString = (week.players[i].player.position === 'DST') ? 
-                            week.players[i].player.firstName : 
-                            week.players[i].player.lastName + ', ' + week.players[i].player.firstName;
+                        var dbPlayer = week.players[i];
+
+                        var searchString = (dbPlayer.player.position === 'DST') ? 
+                            dbPlayer.player.firstName : 
+                            dbPlayer.player.lastName + ', ' + dbPlayer.player.firstName;
 
                         if (scoreNameMap[searchString]) {
                             searchString = scoreNameMap[searchString];
                         }
 
-                        var team = week.players[i].player.team;
+                        var team = dbPlayer.player.team;
 
                         if (teamNameMap[team]) {
                             team = teamNameMap[team];
+                        }
+
+                        var position = dbPlayer.player.position;
+                        if (positionNameMap[position]) {
+                            position = positionNameMap[position];
                         }
 
                         var foundName = false;
@@ -177,8 +192,10 @@ function processStats(callback) {
 
                         for (var j = 0; j < playerData.players.player.length; j++) {
                             if ((team === playerData.players.player[j].team) &&
-                                ((week.players[i].player.position === 'DST') && (playerData.players.player[j].name.split(',')[0]) && (playerData.players.player[j].position === 'Def')) ||
-                                (playerData.players.player[j].name === searchString)) {
+                                (position === playerData.players.player[j].position) &&
+                                (((dbPlayer.player.position === 'DST') && (playerData.players.player[j].name.split(',')[0]) ||
+                                (playerData.players.player[j].name === searchString)))) {
+
                                 matchedPlayers.push(searchString);
                                 foundName = true;
 
@@ -186,7 +203,7 @@ function processStats(callback) {
                                     if (scoreData.playerScores.playerScore[k].id === playerData.players.player[j].id) {
                                         foundScore = true;
 
-                                        week.players[i].scoreOverride = scoreData.playerScores.playerScore[k].score;
+                                        dbPlayer.scoreOverride = scoreData.playerScores.playerScore[k].score;
                                         break;
                                     }
                                 }
