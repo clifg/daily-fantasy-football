@@ -41,7 +41,7 @@ app.controller('CreateContestCtrl', ['$scope', '$rootScope', '$resource', '$rout
             qbFlex: false,
             rbFlex: true,
             wrFlex: true,
-            teFlex: false
+            teFlex: true
         };
 
         $scope.save = function() {
