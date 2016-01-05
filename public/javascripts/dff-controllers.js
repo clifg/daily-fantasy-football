@@ -9,16 +9,11 @@ app.controller('HomeCtrl', ['$scope', '$resource', '$location',
         Weeks.query({ contests: true }, function(weeks) {
             $scope.weeks = weeks;
 
-            for (var i = 0; i < $scope.weeks.length; i++) {
-                if ($scope.weeks[i].state !== 'completed') {
-                    SingleWeek.get({ id: $scope.weeks[i].weekNumber, contests: true }, function(currentWeek) {
-                        $scope.currentWeek = currentWeek;
-                        $scope.friendlyLockDate = moment(currentWeek.weekLockDate).calendar();
-                        $scope.contestCreateAllowed = (currentWeek.state === 'open');
-                    });
-                    break;
-                }
-            }
+            SingleWeek.get({ id: $scope.weeks[weeks.length - 1].weekNumber, contests: true }, function(currentWeek) {
+                $scope.currentWeek = currentWeek;
+                $scope.friendlyLockDate = moment(currentWeek.weekLockDate).calendar();
+                $scope.contestCreateAllowed = (currentWeek.state === 'open');
+            });
         });
 
         $scope.selectContest = function(contestId) {

@@ -2,56 +2,71 @@
 
 var secrets = require('../config/secrets');
 var mongoose = require('mongoose');
-var Week = require('../models/week.js');
+var request = require('request');
+var nodemailer = require('nodemailer');
+var moment = require('moment');
+
+var Week = require('../models/week');
+var Player = require('../models/player');
 var async = require('async');
 
 mongoose.connect(secrets.db);
 
 var asyncTasks = [];
 
+var emailBuffer = '###################### updateWeeks output\n';
+var updateOrError = false;
+
+function log(entry) {
+    emailBuffer += entry + '\n';
+    console.log(entry);
+};
+
 function updateLockAndEnd(callback) {
-    Week.find( { state: { $ne: 'completed' }}, function(err, weeks) {
+    Week.find( { state: { $in: ['open', 'locked'] }}, function(err, weeks) {
         if (err) {
-            console.log(' ! Error getting weeks!');
+            log(' ! Error getting weeks!');
             return callback();
         }
 
         var today = new Date();
-        console.log('About to process ' + weeks.length + ' weeks...');
-        console.log('Today: ' + today);
+        log('About to process ' + weeks.length + ' weeks...');
+        log('Today: ' + today);
 
         async.forEach(weeks, function(week, itrCallback) {
             var dirty = false;
 
-            console.log(' - Processing week number ' + week.weekNumber);
-            console.log('   State     :' + week.state);
-            console.log('   LockDate  :' + week.weekLockDate);
-            console.log('   EndDate   :' + week.weekEndDate);
+            log(' - Processing week number ' + week.weekNumber);
+            log('   State     :' + week.state);
+            log('   LockDate  :' + week.weekLockDate);
+            log('   EndDate   :' + week.weekEndDate);
 
             if (week.weekEndDate < today) {
                 // End date has passed, so close the week
-                console.log('   *** Updating state to completed');
+                log('   *** Updating state to completed');
                 week.state = 'completed';
                 dirty = true;
             } else if ((week.weekLockDate < today) && (week.state === 'open')) {
-                console.log('   *** Updating state to locked');
+                log('   *** Updating state to locked');
                 week.state = 'locked';
                 dirty = true;
             } else if ((week.weekLockDate > today) && (week.state === 'locked')) {
                 // TODO: This shouldn't happen "in production" so maybe send an email to admins
                 // when this happens?
-                console.log('   *** Updating state to open');
+                log('   *** Updating state to open');
                 week.state = 'open';
                 dirty = true;
             }
 
             if (dirty) {
+                updateOrError = true;
+
                 // We updated the week so save it
                 week.save(function(err) {
                     if (err) {
-                        console.log('   *** error saving week: ' + err.data);
+                        log('   *** error saving week: ' + err.data);
                     } else {
-                        console.log('   *** done!');
+                        log('   *** done!');
                     }
 
                     itrCallback();
@@ -60,15 +75,221 @@ function updateLockAndEnd(callback) {
                 itrCallback();
             }
         }, function(err) {
-            console.log('Finished processing all weeks...');
+            log('Finished processing all weeks...');
             callback();
         });
     });
 }
 
+// Annoying list of names that don't match between our database and the scores database
+var scoreNameMap = {
+    'Beckham Jr., Odell': 'Beckham, Odell',
+    'Watson, Benjamin': 'Watson, Ben',
+    'McCarron, AJ': 'McCarron, A.J.',
+    'Vick, Mike': 'Vick, Michael',
+    'Manuel, EJ': 'Manuel, E.J.',
+    'Johnson Jr., Duke': 'Johnson, Duke',
+    'Shorts III, Cecil': 'Shorts, Cecil',
+    'Herron, Daniel': 'Herron, Dan',
+    'Slater, Matthew': 'Slater, Matt',
+    'Dixon, Boobie': 'Dixon, Anthony',
+    'Hammond Jr., Frankie': 'Hammond, Frankie',
+    'Jones, TJ': 'Jones, T.J.',
+    'Bellamy, Joshua': 'Bellamy, Josh',
+    'Housler, Rob': 'Housler, Robert'
+};
+
+// Annoying list of team abbreviations that don't match between our database and the scores database
+var teamNameMap = {
+    'KC': 'KCC',
+    'NE': 'NEP',
+    'TB': 'TBB',
+    'GB': 'GBP',
+    'SF': 'SFO',
+    'JAX': 'JAC',
+    'NO': 'NOS'
+};
+
+function processStats(callback) {
+    log('\nProcessing closed weeks, looking for stats...');
+    // Walk through each week in the 'completed' state and try to download stats. If we can, we'll move
+    // it to the 'closed' state.
+    Week.find({ state: 'completed' })
+        .populate('players.player')
+        .select('-players.stats')
+        .exec(function(err, weeks) {
+        if (err) {
+            log(' ! Error getting completed weeks!');
+            return callback();
+        }
+
+        if (weeks.length == 0) {
+            log('No weeks to update...');
+            return callback();
+        }
+
+        // At this point, we're either writing new scores or we've hit an error
+        updateOrError = true;
+
+        playersUri = 'http://football18.myfantasyleague.com/2015/export?TYPE=players&JSON=1';
+        request(playersUri, function(err, res, body) {
+            if (err) {
+                log(' ! Error downloding player list!');
+                return callback();
+            }
+
+            var playerData = JSON.parse(body);
+
+            async.forEach(weeks, function(week, itrCallback) {
+                log('Week ' + week.weekNumber + ' is completed but not closed...');
+                var uri = 'http://football18.myfantasyleague.com/2015/export?TYPE=playerScores&L=44527&W=' + week.weekNumber + '&JSON=1';
+                request(uri, function(err, res, scores) {
+                    if (err) {
+                        log(' ! Error fetching stats for week ' + week.weekNumber);
+                        return itrCallback();
+                    }
+
+                    var scoreData = JSON.parse(scores);
+
+                    // For each player in our weekly database, find that player in the players object to get the id, then
+                    // find that id in the scores object to get the score and write it back to our database.
+                    var matchedPlayers = [];
+                    var unmatchedPlayers = [];
+                    var missingScores = [];
+
+                    for (var i = 0; i < week.players.length; i++) {
+                        var searchString = (week.players[i].player.position === 'DST') ? 
+                            week.players[i].player.firstName : 
+                            week.players[i].player.lastName + ', ' + week.players[i].player.firstName;
+
+                        if (scoreNameMap[searchString]) {
+                            searchString = scoreNameMap[searchString];
+                        }
+
+                        var team = week.players[i].player.team;
+
+                        if (teamNameMap[team]) {
+                            team = teamNameMap[team];
+                        }
+
+                        var foundName = false;
+                        var foundScore = false;
+
+                        for (var j = 0; j < playerData.players.player.length; j++) {
+                            if ((team === playerData.players.player[j].team) &&
+                                ((week.players[i].player.position === 'DST') && (playerData.players.player[j].name.split(',')[0]) && (playerData.players.player[j].position === 'Def')) ||
+                                (playerData.players.player[j].name === searchString)) {
+                                matchedPlayers.push(searchString);
+                                foundName = true;
+
+                                for (var k = 0; k < scoreData.playerScores.playerScore.length; k++) {
+                                    if (scoreData.playerScores.playerScore[k].id === playerData.players.player[j].id) {
+                                        foundScore = true;
+
+                                        week.players[i].scoreOverride = scoreData.playerScores.playerScore[k].score;
+                                        break;
+                                    }
+                                }
+
+                                break;
+                            }
+                        }
+
+                        if (!foundName) {
+                            unmatchedPlayers.push(searchString);
+                        }
+
+                        if (!foundScore) {
+                            missingScores.push(searchString);
+                        }
+                    }
+
+                    log('Matched: ' + matchedPlayers.length);
+                    log('Unmatched: ' + unmatchedPlayers.length);
+
+                    for (var i = 0; i < unmatchedPlayers.length; i++) {
+                        log('   ' + unmatchedPlayers[i]);
+                    }
+
+                    log('Missing Scores: ' + missingScores.length);
+
+                    for (var i = 0; i < missingScores.length; i++) {
+                        log('   ' + missingScores[i]);
+                    }
+
+                    week.save(function(err) {
+                        if (err) {
+                            log(' ! Error saving score data for week ' + week.weekNumber);
+                        } else {
+                            log('Saved score data for week ' + week.weekNumber);
+                            log('Setting week state to closed...');
+                            week.state = 'closed';
+
+                            week.save(function(err) {
+                                if (err) {
+                                    log(' ! Error closing week ' + week.weekNumber);
+                                } else {
+                                    log('Closed week ' + week.weekNumber);
+                                }
+
+                                return itrCallback();
+                            });
+                        }
+
+                    });
+                });
+            }, function(err) {
+                log('Finished processing weekly stats...');
+                callback();
+            });
+
+            
+        });
+
+    }, function(err) {
+        log('Failed processing closed weeks...');
+    });
+}
+
+function sendEmail(callback) {
+    if (!updateOrError) {
+        console.log('No updates or errors, so not sending log buffer email');
+        return callback();
+    }
+    
+    var transport = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.DAILYFANTASY_EMAIL_USERNAME,
+            pass: process.env.DAILYFANTASY_EMAIL_PASSWORD
+        }
+    });
+
+    transport.sendMail({
+        to: process.env.DAILYFANTASY_ADMIN_EMAIL,
+        subject: 'updateWeeks Report - ' + moment().format('MM/DD/YYYY'),
+        text: emailBuffer
+    }, function(err, info) {
+        if (err) {
+            console.log(' !!! Error sending email report!');
+            console.dir(err);
+            return callback();
+        }
+
+        console.log('Sent report email to ' + process.env.DAILYFANTASY_ADMIN_EMAIL);
+        return callback();
+    });
+};
+
 async.series([
     function(callback) {
         updateLockAndEnd(callback);
+    },
+    function(callback) {
+        processStats(callback);
+    },
+    function(callback) {
+        sendEmail(callback);
     }
 ], function() {
     process.exit();

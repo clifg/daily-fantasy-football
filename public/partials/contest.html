@@ -15,8 +15,9 @@
         <div ng-include="'partials/contest-locked.html'"></div>
     </div>
 
+    <!-- TODO: Decide if we would really want different partials for completed and closed or not... -->
     <!-- If the contest is completed -->
-    <div ng-show="contest.week.state === 'completed'">
-        <div ng-include="'partials/contest-completed.html'"></div>
+    <div ng-show="contest.week.state === 'completed' || contest.week.state === 'closed'">
+        <div ng-include="'partials/contest-locked.html'"></div>
     </div>
 </div>
