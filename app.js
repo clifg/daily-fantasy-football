@@ -54,6 +54,14 @@ app.use(function(req, res, next) {
   next();
 });
 
+// Prevent IE from caching everything
+app.use(function noCache(req, res, next){
+  res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.header("Pragma", "no-cache");
+  res.header("Expires",0);
+  next();
+});
+
 // Client
 app.use('/', index);
 app.use('/login', function(req, res) {
