@@ -7,7 +7,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="/#/">
+      <a class="navbar-brand" href="/#/" data-toggle="collapse" data-target=".navbar-collapse.in">
         <i class="ion ion-ios-americanfootball"></i>
           {{brand}}
       </a>
@@ -27,13 +27,13 @@
           </a>
           <ul class="dropdown-menu">
             <li ng-if="user.isAdmin">
-              <a href="#/admin">Admin</a>
+              <a href="#/admin" data-toggle="collapse" data-target=".navbar-collapse.in">Admin</a>
             </li>
             <li>
-              <a href="#/me">Account</a>
+              <a href="#/me" data-toggle="collapse" data-target=".navbar-collapse.in">Account</a>
             </li>
             <li>
-              <a href="#/logout">Logout</a>
+              <a href="#/logout" data-toggle="collapse" data-target=".navbar-collapse.in">Logout</a>
             </li>
           </ul>
         </li>
