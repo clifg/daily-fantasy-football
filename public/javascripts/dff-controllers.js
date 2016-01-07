@@ -124,7 +124,10 @@ app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeP
             return false;
         };
 
-        Contests.get({ id: $routeParams.id }, function(contest) {
+        Contests.get({ id: $routeParams.id }).$promise.then(function(contest) {
+            Players.get({ weekNumber: contest.week.weekNumber }).$promise.then(function(week) {
+                $scope.players = week.players;
+            });
             // Set the lineup array that the roster will fill-in.
             // TODO: Refactor this into a helper method that takes the position as a param
             // QBs
@@ -180,10 +183,6 @@ app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeP
                     break;
                 }
             }
-
-            Players.get({ weekNumber: contest.week.weekNumber }).$promise.then(function(week) {
-                $scope.players = week.players;
-            });
         });
 
         function flexAllowed(position) {
