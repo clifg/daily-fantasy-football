@@ -125,8 +125,6 @@ app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeP
         };
 
         Contests.get({ id: $routeParams.id }, function(contest) {
-            $scope.contest = contest;
-
             // Set the lineup array that the roster will fill-in.
             // TODO: Refactor this into a helper method that takes the position as a param
             // QBs
@@ -182,10 +180,10 @@ app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeP
                     break;
                 }
             }
-        });
 
-        Players.get({ weekNumber: contest.week.weekNumber }, function(week) {
-            $scope.players = week.players;
+            Players.get({ weekNumber: contest.week.weekNumber }, function(week) {
+                $scope.players = week.players;
+            });
         });
 
         function flexAllowed(position) {
@@ -703,19 +701,13 @@ app.controller('NavbarCtrl', ['$rootScope', '$scope', '$http', '$location',
     function($rootScope, $scope, $http, $location) {
         $scope.user = $rootScope.user;
 
-        // TODO: Rather than abusing $rootScope, we should add a smart cachine layer
-        // to cache the stuff we don't expect to change.
-        if ($rootScope.brand) {
-            $scope.brand = $rootScope.brand;
-        } else {
-            $http.get('/api/v1/brand')
-                .success(function(data) {
-                    $scope.brand = $rootScope.brand = data;
-                })
-                .error(function() {
-                    $scope.brand = $rootScope.brand = 'Daily Fantasy Football';
-                });
-        }
+        $http.get('/api/v1/brand')
+            .success(function(data) {
+                $scope.brand = data;
+            })
+            .error(function() {
+                $scope.brand = 'Daily Fantasy Football';
+            });
     }
 ]);
 
