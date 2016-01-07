@@ -181,7 +181,7 @@ app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeP
                 }
             }
 
-            Players.get({ weekNumber: contest.week.weekNumber }, function(week) {
+            Players.get({ weekNumber: contest.week.weekNumber }).$promise.then(function(week) {
                 $scope.players = week.players;
             });
         });
