@@ -7,9 +7,7 @@ var Week = require('../models/week');
 var Contest = require('../models/contest');
 var Entry = require('../models/entry');
 
-// TODO: protect these APIs
-
-router.get('/', function(req, res) {
+router.get('/', passportConf.isAdmin, function(req, res) {
     Entry.find()
         .populate('user', 'profile')
         .populate('contest')
@@ -18,6 +16,7 @@ router.get('/', function(req, res) {
         if (err) {
             return res.sendStatus(404);
         }
+
         Entry.populate(entries, {
             path: 'contest.week',
             select: '-players',
@@ -32,9 +31,7 @@ router.get('/', function(req, res) {
     });
 });
 
-router.get('/:id', function(req, res) {
-    // TODO: Update this API so we don't return roster data for other users' rosters before
-    // the lock date.
+router.get('/:id', passportConf.isAuthenticated, function(req, res) {
     Entry.findById(req.params.id)
         .populate('user', 'profile')
         .populate('contest')
@@ -44,11 +41,15 @@ router.get('/:id', function(req, res) {
             return res.sendStatus(404);
         }
 
+        if (req.user.id !== entry.user.id) {
+            return res.sendStatus(401);
+        }
+
         res.json(entry);
     });
 });
 
-router.post('/', function(req, res) {
+router.post('/', passportConf.isAuthenticated, function(req, res) {
     var entry = new Entry();
     entry.contest = req.body.contest;
     entry.user = req.body.user || req.user;
@@ -65,10 +66,14 @@ router.post('/', function(req, res) {
     });
 });
 
-router.put('/:id', function(req, res) {
+router.put('/:id', passportConf.isAuthenticated, function(req, res) {
     Entry.findById(req.params.id, function(err, entry) {
         if (err || (entry == null)) {
             return res.sendStatus(404);
+        }
+
+        if ((!req.user.isAdmin) && (req.user.id !== entry.user.id)) {
+            return res.sendStatus(401);
         }
 
         entry.contest = req.body.contest || entry.contest;
@@ -85,7 +90,7 @@ router.put('/:id', function(req, res) {
     });
 });
 
-router.delete('/', function(req, res) {
+router.delete('/', passportConf.isAdmin, function(req, res) {
     Entry.find().remove(function(err) {
         if (err) {
             return res.sendStatus(500);
@@ -95,11 +100,14 @@ router.delete('/', function(req, res) {
     });
 });
 
-router.delete('/:id', function(req, res) {
-    console.log('deleting id: ' + req.params.id);
+router.delete('/:id', passportConf.isAuthenticated, function(req, res) {
     Entry.findById(req.params.id, function(err, entry) {
         if (err) {
             return res.sendStatus(404);
+        }
+
+        if ((!req.user.isAdmin) && (req.user.id !== entry.user.id)) {
+            return res.sendStatus(401);
         }
 
         entry.remove(function(err) {
