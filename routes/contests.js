@@ -8,9 +8,7 @@ var Week = require('../models/week');
 var Contest = require('../models/contest');
 var Entry = require('../models/entry');
 
-// TODO: protect these APIs
-
-router.get('/', function(req, res) {
+router.get('/', passportConf.isAuthenticated, function(req, res) {
     // We do a lean get because we won't be re-saving the model and we want to much with the json
     Contest.find()
         .lean()
@@ -46,7 +44,7 @@ router.get('/', function(req, res) {
     });
 });
 
-router.post('/', function(req, res) {
+router.post('/', passportConf.isAuthenticated, function(req, res) {
     var contest = new Contest();
     contest.owner = req.body.owner;
     contest.week = req.body.week;
@@ -68,10 +66,15 @@ router.post('/', function(req, res) {
     });
 });
 
-router.put('/:id', function(req, res) {
+router.put('/:id', passportConf.isAuthenticated, function(req, res) {
     Contest.findById(req.params.id, function(err, contest) {
         if (err || (contest == null)) {
             return res.sendStatus(404);
+        }
+
+        if ((!req.user.id === contest.owner) && !(req.user.admin))
+        {
+            return res.sendStatus(401);
         }
 
         contest.owner = req.body.owner || contest.owner;
@@ -95,7 +98,7 @@ router.put('/:id', function(req, res) {
     });
 });
 
-router.get('/:id', function(req, res) {
+router.get('/:id', passportConf.isAuthenticated, function(req, res) {
     // We do a lean get because we'll be mucking with the json
     Contest.findById(req.params.id)
         .lean()
@@ -151,7 +154,7 @@ router.get('/:id', function(req, res) {
     });
 });
 
-router.delete('/', function(req, res) {
+router.delete('/', passportConf.isAdmin, function(req, res) {
     Contest.find().remove(function(err) {
         if (err) {
             return res.sendStatus(500);
@@ -167,10 +170,15 @@ router.delete('/', function(req, res) {
     });
 });
 
-router.delete('/:id', function(req, res) {
+router.delete('/:id', passportConf.isAuthenticated, function(req, res) {
     Contest.findById(req.params.id, function(err, contest) {
         if (err || (contest == null)) {
             return res.sendStatus(404);
+        }
+
+        if ((!req.user.id === contest.owner) && !(req.user.admin))
+        {
+            return res.sendStatus(401);
         }
 
         contest.remove(function(err) {
