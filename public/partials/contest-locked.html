@@ -21,7 +21,7 @@
     <div class="row">
         <div class="col-md-4">
             <uib-tabset vertical="true" type="pills">
-                <uib-tab heading="{{entry.user.profile.name}} {{entry.totalScore}}" ng-repeat="entry in contest.entries | orderBy: 'totalScore':true" select="setRosterTab(entry._id)"></uib-tab>
+                <uib-tab heading="{{entry.user.profile.name}} ({{entry.totalScore}})" ng-repeat="entry in contest.entries | orderBy: 'totalScore':true" select="setRosterTab(entry._id)"></uib-tab>
             </uib-tabset>
         </div>
 
