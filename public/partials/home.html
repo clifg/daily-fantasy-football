@@ -1,4 +1,16 @@
 <div class="container">
+    
+    <form class="form-horizontal">
+        <div class="form-group">
+            <label class="col-sm-1 control-label" for="selectWeek">Week</label>
+            <div class="col-xs-1">
+                <select class="form-control" name="selectWeek" ng-model="selectedWeekNumber">
+                    <option ng-repeat="week in weeks | reverse" ng-selected="week.weekNumber === selectedWeekNumber">{{week.weekNumber}}</option>
+                </select>
+            </div>
+        </div>
+    </form>
+
     <h1 style="text-align: center">Week {{currentWeek.weekNumber}}</h1>
     <h3 style="text-align: center">Rosters lock: {{friendlyLockDate}} </h3>
 

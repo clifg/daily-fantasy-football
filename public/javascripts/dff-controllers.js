@@ -4,17 +4,27 @@ var app = angular.module('DailyFantasyFootball');
 app.controller('HomeCtrl', ['$scope', '$resource', '$location',
     function($scope, $resource, $location) {
         var Weeks = $resource('/api/v1/weeks');
-        var SingleWeek = $resource('/api/v1/weeks/:id');
 
-        Weeks.query({ contests: true }, function(weeks) {
+        Weeks.query(function(weeks) {
             $scope.weeks = weeks;
 
-            SingleWeek.get({ id: $scope.weeks[weeks.length - 1].weekNumber, contests: true }, function(currentWeek) {
+            $scope.selectedWeekNumber = String($scope.weeks[weeks.length - 1].weekNumber);
+        });
+
+        $scope.$watch("selectedWeekNumber", function(newWeekNumber) {
+            $scope.selectWeek($scope.selectedWeekNumber);
+        });
+
+        $scope.selectWeek = function(weekNumber) {
+            var SingleWeek = $resource('/api/v1/weeks/:id');
+
+            // TODO: Getting errors that this is getting an array, but it's not. *shrug*
+            SingleWeek.get({ id: weekNumber, contests: true }, function(currentWeek) {
                 $scope.currentWeek = currentWeek;
                 $scope.friendlyLockDate = moment(currentWeek.weekLockDate).calendar();
                 $scope.contestCreateAllowed = (currentWeek.state === 'open');
             });
-        });
+        };
 
         $scope.selectContest = function(contestId) {
             $location.path('/contest/' + contestId);
