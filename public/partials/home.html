@@ -3,7 +3,7 @@
     <form class="form-horizontal">
         <div class="form-group">
             <label class="col-sm-1 control-label" for="selectWeek">Week</label>
-            <div class="col-xs-1">
+            <div class="col-sm-1">
                 <select class="form-control" name="selectWeek" ng-model="selectedWeekNumber">
                     <option ng-repeat="week in weeks | reverse" ng-selected="week.weekNumber === selectedWeekNumber">{{week.weekNumber}}</option>
                 </select>
