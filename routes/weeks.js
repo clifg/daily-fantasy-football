@@ -8,8 +8,6 @@ var Week = require('../models/week');
 var Contest = require('../models/contest');
 var Entry = require('../models/entry');
 
-// TODO: protect these APIs
-
 router.get('/', function(req, res) {
     Week.find({}, null, {sort: {weekNumber: 1}})
         .lean()
@@ -94,7 +92,7 @@ router.get('/:weekNumber', function(req, res) {
     });
 });
 
-router.post('/', function(req, res) {
+router.post('/', passportConf.isAdmin, function(req, res) {
     Week.findOne({ weekNumber: req.body.weekNumber }, function(err, week) {
         if (week) {
             // Already have that week! Should PUT or DELETE it.
@@ -127,7 +125,7 @@ router.post('/', function(req, res) {
     });
 });
 
-router.put('/:weekNumber', function(req, res) {
+router.put('/:weekNumber', passportConf.isAdmin, function(req, res) {
     Week.findOne({ weekNumber: req.body.weekNumber }, function(err, week) {
         if (err || (week == null)) {
             return res.sendStatus(404);
@@ -158,7 +156,7 @@ router.put('/:weekNumber', function(req, res) {
     });
 });
 
-router.delete('/', function(req, res) {
+router.delete('/', passportConf.isAdmin, function(req, res) {
     Week.find().remove(function(err) {
         if (err) {
             return res.sendStatus(500);
@@ -168,7 +166,7 @@ router.delete('/', function(req, res) {
     });
 });
 
-router.delete('/:weekNumber', function(req, res) {
+router.delete('/:weekNumber', passportConf.isAdmin, function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
         if (err || (week == null)) {
             return res.sendStatus(404);
@@ -195,7 +193,7 @@ router.get('/:weekNumber/players', function(req, res) {
     });
 });
 
-router.delete('/:weekNumber/players', function(req, res) {
+router.delete('/:weekNumber/players', passportConf.isAdmin, function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
         if (err || (week == null)) { 
             return res.sendStatus(404);
@@ -236,7 +234,7 @@ router.get('/:weekNumber/players/:playerid', function(req, res) {
 });
 
 // This is only used for setting the score override.
-router.put('/:weekNumber/players/:playerId', function(req, res) {
+router.put('/:weekNumber/players/:playerId', passportConf.isAdmin, function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber })
         .populate('players.player')
         .exec(function(err, week) {
@@ -263,7 +261,7 @@ router.put('/:weekNumber/players/:playerId', function(req, res) {
     });
 });
 
-router.delete('/:weekNumber/players/:playerid', function(req, res) {
+router.delete('/:weekNumber/players/:playerid', passportConf.isAdmin, function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber })
         .populate('players.player')
         .exec(function(err, week) {
@@ -289,7 +287,7 @@ router.delete('/:weekNumber/players/:playerid', function(req, res) {
     });
 })
 
-router.post('/:weekNumber/players', function(req, res) {
+router.post('/:weekNumber/players', passportConf.isAdmin, function(req, res) {
     // TODO: Validate that the posted player doesn't appear to already exist...
     Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
         if (err || (week == null)) {
@@ -323,7 +321,7 @@ router.post('/:weekNumber/players', function(req, res) {
     }); 
 });
 
-router.put('/:weekNumber/players', function(req, res) {
+router.put('/:weekNumber/players', passportConf.isAdmin, function(req, res) {
     Week.findOne({ weekNumber: req.params.weekNumber }, function(err, week) {
         if (err || (week == null)) {
             return res.sendStatus(404);
