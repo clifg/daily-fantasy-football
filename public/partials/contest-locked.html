@@ -21,7 +21,7 @@
     <div class="row">
         <div class="col-md-4">
             <uib-tabset vertical="true" type="pills">
-                <uib-tab heading="{{entry.user.profile.name}} ({{getTotalPoints(entry._id)}})" ng-repeat="entry in contest.entries" select="setRosterTab(entry._id)"></uib-tab>
+                <uib-tab heading="{{entry.user.profile.name}} {{entry.totalScore}}" ng-repeat="entry in contest.entries | orderBy: 'totalScore':true" select="setRosterTab(entry._id)"></uib-tab>
             </uib-tabset>
         </div>
 
@@ -69,7 +69,7 @@
             </div>
 
             <div class="form-group">
-                <h2>Total Points: {{getTotalPoints(selectedEntry._id)}}</h2>
+                <h2>Total Points: {{selectedEntry.totalScore}}</h2>
             </div>
             <div class="form-group">
                 <input type="button" class="btn btn-danger" value="Set Scores" ng-click="setScoreMode = true; saveSuccess = false" ng-show="canSetScores && !setScoreMode"></input>

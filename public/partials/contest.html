@@ -11,13 +11,10 @@
     </div>
 
     <!-- If the contest is locked -->
-    <div ng-show="contest.week.state === 'locked'">
+    <!-- TODO: Decide if we would really want different partials for completed and closed or not... -->
+    <!-- If the contest is completed -->
+    <div ng-show="contest.week.state === 'locked' || contest.week.state === 'completed' || contest.week.state === 'closed'">
         <div ng-include="'partials/contest-locked.html'"></div>
     </div>
 
-    <!-- TODO: Decide if we would really want different partials for completed and closed or not... -->
-    <!-- If the contest is completed -->
-    <div ng-show="contest.week.state === 'completed' || contest.week.state === 'closed'">
-        <div ng-include="'partials/contest-locked.html'"></div>
-    </div>
 </div>

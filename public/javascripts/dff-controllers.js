@@ -324,27 +324,33 @@ app.controller('ContestOpenCtrl', ['$scope', '$rootScope', '$resource', '$routeP
     }
 ]);
 
-app.controller('ContestLockedCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$location',
-    function($scope, $rootScope, $resource, $routeParams, $location) {
+app.controller('ContestLockedCtrl', ['$scope', '$rootScope', '$resource', '$routeParams', '$location', '$q',
+    function($scope, $rootScope, $resource, $routeParams, $location, $q) {
         var Contests = $resource('/api/v1/contests/:id');
         var Players = $resource('/api/v1/weeks/:weekNumber/players');
 
         $scope.setScoreMode = false;
 
-        Contests.get({ id: $routeParams.id }, function(contest) {
-            $scope.contest = contest;
-        
-            // If the current user owns this contest or is an admin, they can set score overrides
-            $scope.canSetScores = ($rootScope.user.isAdmin || ($rootScope.user._id === contest.owner._id));
+        function refreshContest() {
+            Contests.get({ id: $routeParams.id }, function(contest) {
+                $scope.contest = contest;
+            
+                // If the current user owns this contest or is an admin, they can set score overrides
+                $scope.canSetScores = ($rootScope.user.isAdmin || ($rootScope.user._id === contest.owner._id));
 
-            // Set the edit score edit property for each player. This is just used in the client, and
-            // isn't directly sent back to the server.
-            $scope.contest.entries.forEach(function(entry) {
-                entry.roster.forEach(function(player) {
-                    player.editScoreOverride = player.scoreOverride;
+                // Set the edit score edit property for each player. This is just used in the client, and
+                // isn't directly sent back to the server.
+                $scope.contest.entries.forEach(function(entry) {
+                    entry.totalScore = 0;
+                    entry.roster.forEach(function(player) {
+                        player.editScoreOverride = player.scoreOverride;
+                    });
+                    updateTotalPoints(entry);
                 });
             });
-        });
+        };
+
+        refreshContest();
 
         function pushPositionPlayers(sourceRoster, destinationRoster, position) {
             for (var i = 0; i < sourceRoster.length; i++) {
@@ -376,33 +382,15 @@ app.controller('ContestLockedCtrl', ['$scope', '$rootScope', '$resource', '$rout
             }
         };
 
-        $scope.getTotalPoints = function(entryId) {
-            if (!$scope.contest) {
-                // Contest hasn't been loaded yet.
-                return;
-            }
-
-            var entry;
-            var sum = 0;
-            for (var i = 0; i < $scope.contest.entries.length; i++) {
-                if ($scope.contest.entries[i]._id === entryId) {
-                    entry = $scope.contest.entries[i];
-                }
-            }
-
-            if (!entry) {
-                return;
-            }
-
+        function updateTotalPoints(entry) {
+            entry.totalScore = 0;
             for (var i = 0; i < entry.roster.length; i++) {
                 if (typeof entry.roster[i].scoreOverride != 'undefined') {
-                    // TODO: For now we only support the score override. Once we have stats, we'll use the override
-                    // if it's there, otherwise add up the stats.
-                    sum += entry.roster[i].scoreOverride;
+                    entry.totalScore += entry.roster[i].scoreOverride;
                 }
             }
 
-            return Math.round(sum * 100) / 100;
+            entry.totalScore = Math.round(entry.totalScore * 100) / 100;
         };
 
         $scope.saveScores = function() {
@@ -414,40 +402,47 @@ app.controller('ContestLockedCtrl', ['$scope', '$rootScope', '$resource', '$rout
             $scope.savingScores = true;
             var noUpdates = true;
 
+            var promises = [];
+
             for (var i = 0; i < $scope.contest.entries.length; i++) {
-                for (var j = 0; j < $scope.contest.entries[i].roster.length; j++) {
-                    var rosterEntry = $scope.contest.entries[i].roster[j];
+
+                angular.forEach($scope.contest.entries[i].roster, function(rosterEntry) {
                     if (rosterEntry.editScoreOverride != rosterEntry.scoreOverride) {
                         noUpdates = false;
 
-                        // TODO: This doesn't actually work how it should. Need to learn how to use $q.
-                        (function(rosterEntry) {
-                            Player.get({ 
+                        var deferral = $q.defer();
+                        promises.push(deferral.promise);
+
+                        Player.get({ 
+                            weekNumber: $scope.contest.week.weekNumber,
+                            playerId: rosterEntry.player._id },
+                            function(player) {
+                            player.scoreOverride = rosterEntry.editScoreOverride || undefined;
+                            Player.update({
                                 weekNumber: $scope.contest.week.weekNumber,
-                                playerId: rosterEntry.player._id },
-                                function(player) {
-                                player.scoreOverride = rosterEntry.editScoreOverride || undefined;
-                                Player.update({
-                                    weekNumber: $scope.contest.week.weekNumber,
-                                    playerId: player.player._id
-                                }, player, function(player) {
-                                    rosterEntry.scoreOverride = rosterEntry.editScoreOverride;
-                                    $scope.setScoreMode = false;
-                                    $scope.savingScores = false;
-                                    $scope.saveSuccess = true;
-                                }, function() {
-                                    // TODO: error message
-                                    $scope.savingScores = false;
-                                });
+                                playerId: player.player._id
+                            }, player, function(player) {
+                                rosterEntry.scoreOverride = rosterEntry.editScoreOverride;
+                                deferral.resolve();
+                            }, function() {
+                                // TODO: error message
+                                deferral.reject();
                             });
-                        })(rosterEntry);
+                        });
                     }
-                }
+                });
             }
 
             if (noUpdates) {
                 $scope.setScoreMode = false;
                 $scope.savingScores = false;
+            }
+            else {
+                $q.all(promises).then(function() {
+                    $scope.setScoreMode = false;
+                    $scope.savingScores = false;
+                    refreshContest();
+                });
             }
         };
     }
