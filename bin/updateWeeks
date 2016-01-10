@@ -15,7 +15,9 @@ mongoose.connect(secrets.db);
 var asyncTasks = [];
 
 var emailBuffer = '###################### updateWeeks output\n';
-var updateOrError = false;
+var weekStateChanged = false;
+var statsError = false;
+var statsUpdated = false;
 
 function log(entry) {
     emailBuffer += entry + '\n';
@@ -59,7 +61,7 @@ function updateLockAndEnd(callback) {
             }
 
             if (dirty) {
-                updateOrError = true;
+                weekStateChanged = true;
 
                 // We updated the week so save it
                 week.save(function(err) {
@@ -119,15 +121,15 @@ var positionNameMap = {
 };
 
 function processStats(callback) {
-    log('\nProcessing closed weeks, looking for stats...');
-    // Walk through each week in the 'completed' state and try to download stats. If we can, we'll move
+    log('\nProcessing locked and closed weeks, looking for stats...');
+    // Walk through each week in the 'locked' or 'completed' state and try to download stats. If we can, we'll move
     // it to the 'closed' state.
-    Week.find({ state: 'completed' })
+    Week.find({ state: { $in: ['locked', 'completed'] } })
         .populate('players.player')
         .select('-players.stats')
         .exec(function(err, weeks) {
         if (err) {
-            log(' ! Error getting completed weeks!');
+            log(' ! Error getting locked and completed weeks!');
             return callback();
         }
 
@@ -135,9 +137,6 @@ function processStats(callback) {
             log('No weeks to update...');
             return callback();
         }
-
-        // At this point, we're either writing new scores or we've hit an error
-        updateOrError = true;
 
         playersUri = 'http://football18.myfantasyleague.com/2015/export?TYPE=players&JSON=1';
         request(playersUri, function(err, res, body) {
@@ -149,7 +148,7 @@ function processStats(callback) {
             var playerData = JSON.parse(body);
 
             async.forEach(weeks, function(week, itrCallback) {
-                log('Week ' + week.weekNumber + ' is completed but not closed...');
+                log('Week ' + week.weekNumber + ' is ' + week.state + '...');
                 var uri = 'http://football18.myfantasyleague.com/2015/export?TYPE=playerScores&L=44527&W=' + week.weekNumber + '&JSON=1';
                 request(uri, function(err, res, scores) {
                     if (err) {
@@ -203,7 +202,11 @@ function processStats(callback) {
                                     if (scoreData.playerScores.playerScore[k].id === playerData.players.player[j].id) {
                                         foundScore = true;
 
-                                        dbPlayer.scoreOverride = scoreData.playerScores.playerScore[k].score;
+                                        if (dbPlayer.scoreOverride != scoreData.playerScores.playerScore[k].score) {
+                                            dbPlayer.scoreOverride = scoreData.playerScores.playerScore[k].score;
+                                            statsUpdated = true;
+                                        }
+
                                         break;
                                     }
                                 }
@@ -219,6 +222,11 @@ function processStats(callback) {
                         if (!foundScore) {
                             missingScores.push(searchString);
                         }
+                    }
+
+                    if (!statsUpdated) {
+                        log('No stats updated, bailing out');
+                        itrCallback();
                     }
 
                     log('Matched: ' + matchedPlayers.length);
@@ -239,23 +247,31 @@ function processStats(callback) {
                             log(' ! Error saving score data for week ' + week.weekNumber);
                         } else {
                             log('Saved score data for week ' + week.weekNumber);
-                            log('Setting week state to closed...');
-                            week.state = 'closed';
 
-                            week.save(function(err) {
-                                if (err) {
-                                    log(' ! Error closing week ' + week.weekNumber);
-                                } else {
-                                    log('Closed week ' + week.weekNumber);
-                                }
+                            if (week.state === 'completed') {
+                                log('Setting week state to closed...');
+                                week.state = 'closed';
 
-                                return itrCallback();
-                            });
+                                week.save(function(err) {
+                                    if (err) {
+                                        log(' ! Error closing week ' + week.weekNumber);
+                                    } else {
+                                        log('Closed week ' + week.weekNumber);
+                                    }
+
+                                    return itrCallback();
+                                });
+                            } else {
+                                itrCallback();
+                            }
                         }
-
                     });
                 });
             }, function(err) {
+                if (err) {
+                    statsError = true;
+                }
+
                 log('Finished processing weekly stats...');
                 callback();
             });
@@ -269,8 +285,8 @@ function processStats(callback) {
 }
 
 function sendEmail(callback) {
-    if (!updateOrError) {
-        console.log('No updates or errors, so not sending log buffer email');
+    if (!weekStateChanged && !statsError && !statsUpdated) {
+        console.log('No week state change, no errors, and no updated stats, so not sending log buffer email');
         return callback();
     }
     
