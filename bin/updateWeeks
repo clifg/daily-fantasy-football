@@ -19,6 +19,9 @@ var weekStateChanged = false;
 var statsError = false;
 var statsUpdated = false;
 
+var playerStatsUri = 'http://www70.myfantasyleague.com/2016/export?TYPE=playerScores&L=34227&W='
+var playerListUri = 'http://www56.myfantasyleague.com/2016/export?TYPE=players&JSON=1'
+
 function log(entry) {
     emailBuffer += entry + '\n';
     console.log(entry);
@@ -138,8 +141,7 @@ function processStats(callback) {
             return callback();
         }
 
-        playersUri = 'http://football18.myfantasyleague.com/2015/export?TYPE=players&JSON=1';
-        request(playersUri, function(err, res, body) {
+        request(playerListUri, function(err, res, body) {
             if (err) {
                 log(' ! Error downloding player list!');
                 return callback();
@@ -149,7 +151,7 @@ function processStats(callback) {
 
             async.forEach(weeks, function(week, itrCallback) {
                 log('Week ' + week.weekNumber + ' is ' + week.state + '...');
-                var uri = 'http://football18.myfantasyleague.com/2015/export?TYPE=playerScores&L=44527&W=' + week.weekNumber + '&JSON=1';
+                var uri = playerStatsUri + week.weekNumber + '&JSON=1';
                 request(uri, function(err, res, scores) {
                     if (err) {
                         log(' ! Error fetching stats for week ' + week.weekNumber);
