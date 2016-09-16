@@ -229,7 +229,7 @@ function processStats(callback) {
 
                     if (!statsUpdated) {
                         log('No stats updated, bailing out');
-                        itrCallback();
+                        return itrCallback();
                     }
 
                     log('Matched: ' + matchedPlayers.length);
