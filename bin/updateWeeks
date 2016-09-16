@@ -115,7 +115,8 @@ var teamNameMap = {
     'SF': 'SFO',
     'JAX': 'JAC',
     'NO': 'NOS',
-    'SD': 'SDC'
+    'SD': 'SDC',
+    'LA': 'RAM'
 };
 
 // Annoying list of position abbreviations that don't match between out database and the scores database
