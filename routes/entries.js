@@ -72,7 +72,7 @@ router.put('/:id', passportConf.isAuthenticated, function(req, res) {
             return res.sendStatus(404);
         }
 
-        if ((!req.user.isAdmin) && (req.user.id !== entry.user.id)) {
+        if ((!req.user.isAdmin) && (req.user.id !== entry.user)) {
             return res.sendStatus(401);
         }
 
@@ -106,7 +106,7 @@ router.delete('/:id', passportConf.isAuthenticated, function(req, res) {
             return res.sendStatus(404);
         }
 
-        if ((!req.user.isAdmin) && (req.user.id !== entry.user.id)) {
+        if ((!req.user.isAdmin) && (req.user.id !== entry.user)) {
             return res.sendStatus(401);
         }
 
