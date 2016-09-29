@@ -77,6 +77,9 @@ router.put('/:id', passportConf.isAuthenticated, function(req, res) {
         console.log(req.user.id);
         console.log(entry.user.id);
         
+        console.log(req.user.id !== entry.user);
+        console.log(req.user.id !== entry.user.id);
+        
         if ((!req.user.isAdmin) && (req.user.id !== entry.user)) {
             return res.sendStatus(401);
         }
