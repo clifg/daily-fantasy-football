@@ -72,11 +72,10 @@ router.put('/:id', passportConf.isAuthenticated, function(req, res) {
             return res.sendStatus(404);
         }
 
-        console.dir(req.user);
-        console.dir(entry.user);
-        console.log('======================');
-        console.dir(req);
-        console.dir(entry);
+        console.log(req.user);
+        console.log(entry.user);
+        console.log(req.user.id);
+        console.log(entry.user.id);
         
         if ((!req.user.isAdmin) && (req.user.id !== entry.user)) {
             return res.sendStatus(401);
