@@ -107,7 +107,7 @@ var scoreNameMap = {
     'Jones Jr., Marvin': 'Jones, Marvin',
     'Smith Sr., Steve': 'Smith, Steve',
     'Pryor Sr., Terrelle': 'Pryor, Terrelle',
-    'Fuller V, Will": "Fuller, Will"
+    'Fuller V, Will': 'Fuller, Will'
 };
 
 // Annoying list of team abbreviations that don't match between our database and the scores database
