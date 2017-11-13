@@ -87,6 +87,7 @@ function updateLockAndEnd(callback) {
 }
 
 // Annoying list of names that don't match between our database and the scores database
+// First name is from the site, second is from the stats provider
 var scoreNameMap = {
     'Beckham Jr., Odell': 'Beckham, Odell',
     'Watson, Benjamin': 'Watson, Ben',
@@ -107,7 +108,8 @@ var scoreNameMap = {
     'Jones Jr., Marvin': 'Jones, Marvin',
     'Smith Sr., Steve': 'Smith, Steve',
     'Pryor Sr., Terrelle': 'Pryor, Terrelle',
-    'Fuller V, Will': 'Fuller, Will'
+    'Fuller V, Will': 'Fuller, Will',
+    'Gurley II, Todd': 'Gurley, Todd'
 };
 
 // Annoying list of team abbreviations that don't match between our database and the scores database
