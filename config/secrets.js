@@ -7,7 +7,7 @@ module.exports = {
         // Used by passport
         clientID: process.env.DAILYFANTASY_FACEBOOK_ID,
         clientSecret: process.env.DAILYFANTASY_FACEBOOK_SECRET,
-        callbackURL: '/auth/facebook/callback',
+        callbackURL: 'https://www.jankkings.com/auth/facebook/callback',
         passReqToCallback: true,
         profileFields: ['id', 'email', 'name', 'displayName'],
 
