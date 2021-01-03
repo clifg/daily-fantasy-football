@@ -19,8 +19,8 @@ var weekStateChanged = false;
 var statsError = false;
 var statsUpdated = false;
 
-var playerStatsUri = 'http://www70.myfantasyleague.com/2017/export?TYPE=playerScores&L=34227&W='
-var playerListUri = 'http://www56.myfantasyleague.com/2017/export?TYPE=players&JSON=1'
+var playerStatsUri = 'http://www70.myfantasyleague.com/2020/export?TYPE=playerScores&L=34227&W='
+var playerListUri = 'http://www70.myfantasyleague.com/2020/export?TYPE=players&L=34227&JSON=1'
 
 function log(entry) {
     emailBuffer += entry + '\n';
